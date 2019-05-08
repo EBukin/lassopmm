@@ -1,0 +1,45 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo=FALSE, include = FALSE}
+knitr::opts_chunk$set(
+  fig.align = 'center',
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+
+# syntheticpanel
+
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+<!-- badges: end -->
+
+
+The goal of syntheticpanel is to replicate functionality of the STATA programme "lassopmm".
+
+## Installation
+
+You can install development version from [GitHub](https://github.com/EBukin/syntheticpanel) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("EBukin/syntheticpanel")
+```
+
+## Example
+
+To show how this package work, we will use same example used in the 'lassopmm' program in stata.
+
+
+```{r example}
+library(syntheticpanel)
+## basic example code
+```
+
