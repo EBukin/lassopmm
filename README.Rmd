@@ -56,7 +56,7 @@ extrar <- "displacement"  # any extra variable to bring from period 0 data
 bt_groups <- c("psu")     # Grouping variable for bootsrapping.
                           # May be a combination of variables.
 n_nearest <- 1    # numebr of the nearest observations to drow a random match
-
+set.seed(11223344)
 imputation <-
   impute_data(period_0 = p_0_exmple, 
               period_1 = p_1_exmple,

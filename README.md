@@ -93,7 +93,7 @@ extrar <- "displacement"  # any extra variable to bring from period 0 data
 bt_groups <- c("psu")     # Grouping variable for bootsrapping.
                           # May be a combination of variables.
 n_nearest <- 1    # numebr of the nearest observations to drow a random match
-
+set.seed(11223344)
 imputation <-
   impute_data(period_0 = p_0_exmple, 
               period_1 = p_1_exmple,
@@ -135,11 +135,11 @@ glimpse(imputation)
 #> $ numobs                <dbl> 65, 71, 32, 24, 49, 23, 27, 65, 71, 32, ...
 #> $ samples               <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
 #> $ numobs11              <dbl> 75, 76, 77, 78, 79, 80, 81, 75, 76, 77, ...
-#> $ y1_hat                <dbl> NA, NA, NA, NA, NA, NA, NA, 7188.429, 45...
-#> $ period_0_id           <chr> NA, NA, NA, NA, NA, NA, NA, "73", "71", ...
-#> $ y0_hat                <dbl> NA, NA, NA, NA, NA, NA, NA, 7253.709, 45...
-#> $ price_period_0        <dbl> NA, NA, NA, NA, NA, NA, NA, 6850, 5397, ...
-#> $ displacement_period_0 <dbl> NA, NA, NA, NA, NA, NA, NA, 97, 90, 200,...
+#> $ y1_hat                <dbl> NA, NA, NA, NA, NA, NA, NA, 5137.791, 55...
+#> $ period_0_id           <chr> NA, NA, NA, NA, NA, NA, NA, "65", "39", ...
+#> $ y0_hat                <dbl> NA, NA, NA, NA, NA, NA, NA, 5137.791, 54...
+#> $ price_period_0        <dbl> NA, NA, NA, NA, NA, NA, NA, 3895, 4181, ...
+#> $ displacement_period_0 <dbl> NA, NA, NA, NA, NA, NA, NA, 79, 231, 250...
 
 # Summary of the number of observations per one ID
 # 6 in total meaning that 1 observation stands for original
@@ -196,12 +196,12 @@ mi_test <- as.mids(imputation) # Converting imputated data to the "mids" object
 mean_stats <- with(mi_test, lm(price_period_0 ~ 1))
 est <- pool(mean_stats) # poolling results 
 summary(est) # returns mean and standard error for pooled multipuly imputed data.
-#>             estimate std.error statistic       df     p.value
-#> (Intercept) 6221.029  1305.117  4.766644 4.193502 0.007880002
+#>             estimate std.error statistic      df    p.value
+#> (Intercept) 6211.229   1361.14  4.563253 4.60578 0.00737454
 est          # returns additional data 
 #> Class: mipo    m = 5 
-#>             estimate    ubar        b       t dfcom       df       riv
-#> (Intercept) 6221.029 1544676 132212.7 1703331     6 4.193502 0.1027111
+#>             estimate    ubar       b       t dfcom      df        riv
+#> (Intercept) 6211.229 1828879 19853.5 1852703     6 4.60578 0.01302667
 #>                 lambda       fmi
-#> (Intercept) 0.09314413 0.3452761
+#> (Intercept) 0.01285915 0.2724356
 ```

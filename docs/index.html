@@ -163,7 +163,7 @@ extrar &lt;-<span class="st"> "displacement"</span>  <span class="co"># any extr
 bt_groups &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"psu"</span>)     <span class="co"># Grouping variable for bootsrapping.</span>
                           <span class="co"># May be a combination of variables.</span>
 n_nearest &lt;-<span class="st"> </span><span class="dv">1</span>    <span class="co"># numebr of the nearest observations to drow a random match</span>
-
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Random">set.seed</a></span>(<span class="dv">11223344</span>)
 imputation &lt;-
 <span class="st">  </span><span class="kw"><a href="reference/impute_data.html">impute_data</a></span>(<span class="dt">period_0 =</span> p_0_exmple, 
               <span class="dt">period_1 =</span> p_1_exmple,
@@ -205,11 +205,11 @@ imputation &lt;-
 <span class="co">#&gt; $ numobs                &lt;dbl&gt; 65, 71, 32, 24, 49, 23, 27, 65, 71, 32, ...</span>
 <span class="co">#&gt; $ samples               &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...</span>
 <span class="co">#&gt; $ numobs11              &lt;dbl&gt; 75, 76, 77, 78, 79, 80, 81, 75, 76, 77, ...</span>
-<span class="co">#&gt; $ y1_hat                &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 6769.509, 69...</span>
-<span class="co">#&gt; $ period_0_id           &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, "65", "19", ...</span>
-<span class="co">#&gt; $ y0_hat                &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 6769.509, 70...</span>
-<span class="co">#&gt; $ price_period_0        &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 3895, 3955, ...</span>
-<span class="co">#&gt; $ displacement_period_0 &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 79, 250, 250...</span>
+<span class="co">#&gt; $ y1_hat                &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 5137.791, 55...</span>
+<span class="co">#&gt; $ period_0_id           &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, "65", "39", ...</span>
+<span class="co">#&gt; $ y0_hat                &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 5137.791, 54...</span>
+<span class="co">#&gt; $ price_period_0        &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 3895, 4181, ...</span>
+<span class="co">#&gt; $ displacement_period_0 &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 79, 231, 250...</span>
 
 <span class="co"># Summary of the number of observations per one ID</span>
 <span class="co"># 6 in total meaning that 1 observation stands for original</span>
@@ -261,14 +261,14 @@ mi_test &lt;-<span class="st"> </span><span class="kw">as.mids</span>(imputation
 mean_stats &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/with">with</a></span>(mi_test, <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/lm">lm</a></span>(price_period_<span class="dv">0</span> <span class="op">~</span><span class="st"> </span><span class="dv">1</span>))
 est &lt;-<span class="st"> </span><span class="kw">pool</span>(mean_stats) <span class="co"># poolling results </span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(est) <span class="co"># returns mean and standard error for pooled multipuly imputed data.</span>
-<span class="co">#&gt;             estimate std.error statistic       df    p.value</span>
-<span class="co">#&gt; (Intercept) 6313.114  1506.075  4.191767 3.790709 0.01542366</span>
+<span class="co">#&gt;             estimate std.error statistic      df    p.value</span>
+<span class="co">#&gt; (Intercept) 6211.229   1361.14  4.563253 4.60578 0.00737454</span>
 est          <span class="co"># returns additional data </span>
 <span class="co">#&gt; Class: mipo    m = 5 </span>
-<span class="co">#&gt;             estimate    ubar        b       t dfcom       df       riv</span>
-<span class="co">#&gt; (Intercept) 6313.114 1891866 313662.9 2268261     6 3.790709 0.1989547</span>
-<span class="co">#&gt;                lambda       fmi</span>
-<span class="co">#&gt; (Intercept) 0.1659401 0.4115875</span></code></pre></div>
+<span class="co">#&gt;             estimate    ubar       b       t dfcom      df        riv</span>
+<span class="co">#&gt; (Intercept) 6211.229 1828879 19853.5 1852703     6 4.60578 0.01302667</span>
+<span class="co">#&gt;                 lambda       fmi</span>
+<span class="co">#&gt; (Intercept) 0.01285915 0.2724356</span></code></pre></div>
 </div>
 </div>
   </div>
