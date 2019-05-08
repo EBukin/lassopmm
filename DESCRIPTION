@@ -1,0 +1,37 @@
+Package: syntheticpanel
+Title: Create synthetic panels from cross sectional data
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Leonardo",
+           family = "Lucchetti",
+           role = c("aut"))
+    person(given = "Paul",
+           family = "Corral",
+           role = c("aut"))
+    person(given = "Eduard",
+           family = "Bukin",
+           role = c("cre"),
+           email = "edwardbukin@gmail.com",
+           comment = c(ORCID = "0000-0002-1003-1260"))
+Description: This package implements ideas of machine learning for creating 
+    synthetic panel datasets from the cross-sectional data. It is initially ment to 
+    model population income in order to predict poverty mobility, when panel data
+    is not available.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 3.1.0)
+Imports: 
+    dplyr (>= 0.8.0),
+    glmnet (>= 2.0),
+    broom,
+    tidyr,
+    purrr,
+    tibble,
+    shiny (>= 1.1.0),
+    tidyselect
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 6.1.1
