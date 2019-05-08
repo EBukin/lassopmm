@@ -1,18 +1,19 @@
 Package: syntheticpanel
 Title: Create synthetic panels from cross sectional data
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R: c(
     person(given = "Leonardo",
            family = "Lucchetti",
-           role = c("aut"))
+           role = c("aut")),
     person(given = "Paul",
            family = "Corral",
-           role = c("aut"))
+           role = c("aut")),
     person(given = "Eduard",
            family = "Bukin",
-           role = c("cre"),
+           role = c("aut", "cre"),
            email = "edwardbukin@gmail.com",
            comment = c(ORCID = "0000-0002-1003-1260"))
+           )
 Description: This package implements ideas of machine learning for creating 
     synthetic panel datasets from the cross-sectional data. It is initially ment to 
     model population income in order to predict poverty mobility, when panel data
