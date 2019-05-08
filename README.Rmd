@@ -6,7 +6,7 @@ output: github_document
 
 ```{r, echo=FALSE, include = FALSE}
 knitr::opts_chunk$set(
-  fig.align = 'center',
+  # fig.align = 'center',
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 
-The goal of syntheticpanel is to replicate functionality of the STATA programme "lassopmm".
+The goal of syntheticpanel is to replicate functionality of the STATA program "lassopmm".
 
 ## Installation
 
@@ -33,13 +33,79 @@ You can install development version from [GitHub](https://github.com/EBukin/synt
 devtools::install_github("EBukin/syntheticpanel")
 ```
 
-## Example
+## Example of the basic use
 
-To show how this package work, we will use same example used in the 'lassopmm' program in stata.
-
+To show how this package work, we will use same example used in the 'lassopmm' program does in stata. For that reason, the package contains three data frames extracted from stata: `p_0_exmple`, `p_1_exmple` and `sample_bootstrap`. We will use them to reproduce similar results as the `lassopmm` help file.
 
 ```{r example}
+library(dplyr)
+library(purrr)
 library(syntheticpanel)
-## basic example code
+
+glimpse(p_0_exmple)       # help(p_0_exmple)
+glimpse(p_1_exmple)       # help(p_1_exmple)
+glimpse(sample_bootstrap) # help(sample_bootstrap)
+
+dep <- "price"            # Dependent variable
+indep <- c("mpg", "headroom", "trunk",
+           "weight", "length", "turn",
+           "displacement", "gear_ratio",
+           "foreign")     # independent variables
+weight <- "weight"        # weight variable
+extrar <- "displacement"  # any extra variable to bring from period 0 data
+bt_groups <- c("psu")     # Grouping variable for bootsrapping.
+                          # May be a combination of variables.
+n_nearest <- 1    # numebr of the nearest observations to drow a random match
+
+imputation <-
+  impute_data(period_0 = p_0_exmple, 
+              period_1 = p_1_exmple,
+              dep_var = dep, indep_var = indep, weight_var = weight,
+              group_boot_var = bt_groups,
+              extra_var = extrar,
+              n_boot = 5, # Numebr of bootstrap iterations
+              n_near = 1)
 ```
+
+In the basic layout, the function returns us a long-structured data frame, which is built up on the `period_1` input to the function. Resulting data frame contains essential variables `.imp` and '.id`. Variable `.imp` represents the number of the bootstrap iteration (`.imp == 0` is the originl data) and `.id` represents the unique ID of the observation from the period 1.
+
+There are several new variables added in the `period_1` data frame in the `imputation` form. These are:
+
+*    `y1_hat` - predicted values for each `.id` in the period 1, using id-specific independent variables and lasso regression parameters estimated based on the '.imp'-specific bootstrap sub-sample from the _period 0_. `y0_hat` is the same, but for the period 0.
+*    `period_0_id` - id of the observation from the period 0, which is the nearest match for the `y1_hat` from the `y0_hat` estimated on a separate bootstrapped sub-sample according to the `.imp`.
+*    `price_period_0` - is the depended variable from the period 0 matched to the period 1. 
+*    `displacement_period_0` and any other variable such as `*_period_0` are the variables which we specify to extract from the period 0 using the parameter `extra_var`.
+
+```{r}
+glimpse(imputation)
+
+# Summary of the number of observations per one ID
+# 6 in total meaning that 1 observation stands for original
+# non imputed data and others are bootstrap imputations
+imputation %>% group_by(.id) %>% count()
+
+# Summary of the number of observations per imputation. 7 - consisten
+# 0 imputation is the original data.
+imputation %>% group_by(.imp) %>% count()
+```
+
+## Using multiple imputation logic
+
+Similarly to the `mi` environment in stata, we can use here multiple imputation techniques for estimating summary statistics of the newly imputed data. This is possible using the [mice](https://cran.r-project.org/package=mice) package. Workflow and logic of this package is well explained in this [book](https://stefvanbuuren.name/fimd/workflow.html).
+
+First, we need to convert data frame to the `mids` object. Then we used `mice::with()` to apply specific statistics to each single bootstrap iteration. With `mice::pool()` we pool statistics results together. We use `summary()` to extract more user-friendly statistics from the pooled results. 
+
+As straightforward statistics such as `mean()` or `sd()` is slightly more sophisticated with the multiple imputed data, we use linear model to derive mean values of the imputed observations in the variable `price_period_0`. 
+
+
+```{r}
+library(mice)
+
+mi_test <- as.mids(imputation) # Converting imputated data to the "mids" object
+mean_stats <- with(mi_test, lm(price_period_0 ~ 1))
+est <- pool(mean_stats) # poolling results 
+summary(est) # returns mean and standard error for pooled multipuly imputed data.
+est          # returns additional data 
+```
+
 
