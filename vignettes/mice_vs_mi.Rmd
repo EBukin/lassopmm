@@ -1,0 +1,94 @@
+---
+title: "Multiple imputation statistics in STATA and R"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{mi_stata_r}}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+Here, we are going to break down some differences between the multiple imputation statics generate in with the `mice` package in R and Stata libraries `mi`. To do so, we will use the multiple imputation data generated in STATA with the `lassopmm` sample code.
+
+
+Using R for the same kind of analysis on the same data.
+
+```{r}
+suppressMessages(library(dplyr))
+suppressMessages(library(tidyr))
+library(haven)
+suppressMessages(library(mice))
+
+stata_pool_data <- read_dta("base_pmm_example.dta")
+```
+
+Now we clean the data to the `mice` like data structure, where we have `.id` and `.imp` variables and the imputed data itself. 
+
+```{r}
+stata_pmm_part <- 
+  stata_pool_data %>%
+  filter(is.na(price)) %>%
+  select(mpg, weight, contains("price")) %>%
+  mutate(.id = row_number()) %>%
+  gather(type, price, 3:(length(.) - 1)) %>%
+  {
+    a <-
+      (.) %>%
+      distinct(type) %>%
+      mutate(.imp = 0:(nrow(.) - 1))
+    (.) %>% left_join(a, by = "type")
+  } %>%
+  select(-type) %>%
+  select(.imp, .id, everything())
+glimpse(stata_pmm_part)
+```
+
+Finally, we convert this data to the `mice` form and run basic analysis of the means and standard deviations. To estimate mean of the multiple imputation data in R using mice package, we need to use regression methods. We basically regress our variable of interest with one intercept only and summaries the statistics on the pooled multiple imputation data set. For more information about that wee the book [Flexible Imputation of Missing Data](https://stefvanbuuren.name/fimd/) and specifically [chapter 2.3](https://stefvanbuuren.name/fimd/sec-whyandwhen.html) and [chapter 2.4](https://stefvanbuuren.name/fimd/sec-inference.html).
+
+
+```{r}
+stt <- as.mids(stata_pmm_part)
+fit <- with(stt, lm(price ~ 1, weights = weight))
+est <- pool(fit)
+est    # Getting pool results
+summary(est, conf.int = TRUE) # Getting pooled LM summary
+```
+
+The R results are identical to the Stata!
+
+*    `estimate` stands for the mean
+*    `t` for the variance and `t^0.5` for the standard error `std.error`
+*    `riv` for the `Average RVI`
+*    `fmi` for the `Largest FMI`
+*    `df` for the degrees of freedom statistics.
+
+The numbers are almost identical to Stata (see below). 
+
+Stata results:
+
+``` 
+. mi estimate: mean price if samples==1 [aw=weight]
+(5 values of imputed variable price in m>0 updated to match values in m=0)
+
+Multiple-imputation estimates     Imputations     =          5
+Mean estimation                   Number of obs   =          7
+                                  Average RVI     =     0.1190
+                                  Largest FMI     =     0.1737
+                                  Complete DF     =          6
+DF adjustment:   Small sample     DF:     min     =       4.12
+                                          avg     =       4.12
+Within VCE type:     Analytic             max     =       4.12
+
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+       price |   6711.486    1521.65      2535.511    10887.46
+--------------------------------------------------------------
+```

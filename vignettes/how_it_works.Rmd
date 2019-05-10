@@ -1,0 +1,214 @@
+---
+title: "How it works in steps"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{how_it_works}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Here we break into the parts how the imputation process is built in this package. 
+
+```{r setup}
+library(dplyr)
+library(purrr)
+library(tidyr)
+library(syntheticpanel)
+```
+
+## Step 1. Bootstrapping
+
+To re sample data in a reproducible way, we create bootstrapping vectors. These are then used for sub sampling input data. It all comes to a simple `sample` function form base R, which re-sample a vector of indexes with the repetitions. It is  wrapped around the two functions. 
+
+`get_bootstrap_permutation()`
+
+```{r}
+get_bootstrap_permutation
+```
+
+`sample_vector()`
+
+```{r}
+sample_vector
+```
+
+As an example, let us create a data fame with two columns `id` and `group`. Column group is used for the group wise re-sampling and the column id is returned as an index of the new sample structure.
+
+```{r}
+sample_vector(1:10)
+df <- tibble::tibble(id = 1:30, group = sort(rep(1:3, 10)))
+glimpse(df)
+get_bootstrap_permutation(df, 3)
+```
+
+## Step 2. Matching the nearest observation
+
+It happens also in two steps. 
+
+`find_one_near()` finds a nearest match of one observation from a vector of observations. 
+
+```{r}
+find_one_near
+```
+ 
+It works as:
+ 
+```{r}
+find_one_near(c("a" = 10), c(8:15), 3)
+find_one_near(c("a" = 10), setNames(c(8:15), letters[1:8]), 5)
+```
+ 
+`find_near()` wraps it for matching vector with the vector. 
+
+```{r}
+find_near
+```
+
+Producing:
+```{r}
+obs <- setNames(rnorm(5), as.character(1:5))
+match_v <- setNames(rnorm(50), as.character(1:50))
+find_near(obs, match_v, n_near = 10)
+```
+
+## Step 3. Estimating matches
+
+This is done with the `estimate_matches()` which accepts already re sampled data. Lets follow an example. We initialize the necessary data vectors X, Y, W-weights and XX1 - period 1 independent variables for predictions.
+
+```{r}
+XX <- as.matrix(mtcars[, !names(mtcars) %in% "hp"])
+YY <- as.matrix(mtcars[, "hp"])
+WW <- matrix(rep(1, nrow(mtcars)), ncol = 1, nrow = nrow(mtcars))
+XX1 <- as.matrix(mtcars[1:10, !names(mtcars) %in% "hp"])
+```
+
+Running simple estimation and returning the output is straightforward. We run it in the full - not reduced form to see all the possible outputs of the function.
+
+```{r}
+a <- estimate_matches(x_mat = XX, y_mat = YY, w_mat = WW, x1_mat = XX1, reduced = FALSE, n_near = 5)
+str(a, max.level = 1)
+a$fit %>% coef()
+```
+
+Same could be done with the bootstrapping. The only difference is that we have to supply to the function a sub sampled version of data (X, Y and W).
+
+```{r}
+perm_example <- purrr::map(1:5, ~ sample(1:nrow(YY), nrow(YY), TRUE))
+a_boot <-
+   perm_example %>%
+   purrr::map(~ syntheticpanel::estimate_matches(
+     x_mat = XX[.x, ],
+     y_mat = YY[.x, ],
+     w_mat = WW[.x, ],
+     x1_mat = XX1,
+     reduced = FALSE,
+     n_near = 5
+   ))
+```
+
+Here is an example of the possible outcomes of the bootstrapped analysis and how they could be tackled using `purrr` package:
+
+*    Exploring the structure:
+
+```{r}
+a_boot %>%
+ str(max.level = 1)
+```
+
+*    Accessing fit of a specific bootstrap iteration
+
+```{r}
+a_boot[[3]]$fit
+```
+
+*    Doing the same with each single bootstrap iteration
+
+```{r}
+a_boot %>%
+ map("fit")
+```
+
+*    Extracting coefficients from each single bootstrap iteration
+
+```{r}
+a_boot %>%
+ map("fit") %>%
+ map(coefficients)
+```
+
+*    Combine all coefficients in a table:
+
+```{r}
+a_boot %>%
+ map("fit") %>%
+ map(broom::tidy) %>%
+ map(~ select(.x, term, estimate)) %>%
+ map2(.y = 1:length(.), ~ rename_at(.x, vars(estimate), list(~ paste0(., "_", .y)))) %>%
+ reduce(full_join)
+
+```
+
+The source code of the function looks like:
+
+```{r}
+estimate_matches
+```
+
+## Step 3. Wrap up around input as data frames and multiple imputations data as an output.
+
+As a wrap-up example, we use the read me example. It is a straight forward initialization of built-in package data and running the analysis.
+
+```{r}
+glimpse(p_0_exmple)       # help(p_0_exmple)
+glimpse(p_1_exmple)       # help(p_1_exmple)
+glimpse(sample_bootstrap) # help(sample_bootstrap)
+
+dep <- "price"            # Dependent variable
+indep <- c("mpg", "headroom", "trunk",
+           "weight", "length", "turn",
+           "displacement", "gear_ratio",
+           "foreign")     # independent variables
+weight <- "weight"        # weight variable
+extrar <- "displacement"  # any extra variable to bring from period 0 data
+bt_groups <- c("psu")     # Grouping variable for bootsrapping.
+                          # May be a combination of variables.
+n_nearest <- 1    # numebr of the nearest observations to drow a random match
+set.seed(11223344)
+imputation <-
+  impute_data(period_0 = p_0_exmple, 
+              period_1 = p_1_exmple,
+              dep_var = dep, indep_var = indep, weight_var = weight,
+              group_boot_var = bt_groups,
+              extra_var = extrar,
+              n_boot = 5, # Numebr of bootstrap iterations
+              n_near = 1)
+
+glimpse(imputation)
+
+# Summary of the number of observations per one ID
+# 6 in total meaning that 1 observation stands for original
+# non imputed data and others are bootstrap imputations
+imputation %>% group_by(.id) %>% count()
+
+# Summary of the number of observations per imputation. 7 - consisten
+# 0 imputation is the original data.
+imputation %>% group_by(.imp) %>% count()
+```
+
+Source code of the function is:
+
+```{r}
+impute_data
+```
+
+
+
+
+
