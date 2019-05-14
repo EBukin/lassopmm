@@ -58,6 +58,9 @@
     <li>
       <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
     </li>
+    <li>
+      <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
+    </li>
   </ul>
 </li>
       </ul>
@@ -87,10 +90,10 @@
 <p>Using R for the same kind of analysis on the same data.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr))
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr))
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(haven)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(haven))
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(mice))
 
-stata_pool_data &lt;-<span class="st"> </span><span class="kw">read_dta</span>(<span class="st">"base_pmm_example.dta"</span>)</code></pre></div>
+stata_pool_data &lt;-<span class="st"> </span><span class="kw">read_dta</span>(<span class="st">"base_pmm_example.dta"</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">zap_labels</span>()</code></pre></div>
 <p>Now we clean the data to the <code>mice</code> like data structure, where we have <code>.id</code> and <code>.imp</code> variables and the imputed data itself.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">stata_pmm_part &lt;-<span class="st"> </span>
 <span class="st">  </span>stata_pool_data <span class="op">%&gt;%</span>

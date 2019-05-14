@@ -4,12 +4,15 @@
 \alias{get_bootstrap_permutation}
 \title{Generates a list of permutation vectors for bootsrapping}
 \usage{
-get_bootstrap_permutation(data, n_rep)
+get_bootstrap_permutation(data, n_boot)
 }
 \arguments{
 \item{data}{dataframe containing two columns \code{group} and \code{id}.}
 
-\item{n_rep}{number of resamplings}
+\item{n_boot}{number of bootstrap permulations (resamplings).
+If \code{n_rep = 0}, no bootstraping is performed and we have the
+bootstrap sample, whcih consist of the same observations in the same
+order as source data.}
 }
 \description{
 Generates a list of permutation vectors for bootsrapping

@@ -9,7 +9,7 @@ find_near(observ_vector, match_vector, n_near = 5)
 \arguments{
 \item{observ_vector}{named vector or value to find a match from `match_vector`.
 If the vector has no names function will still work, but the resulting
-`period_1_id` variable will be empty.}
+`target_id` variable will be empty.}
 
 \item{match_vector}{named vector which is used to find a nearest match to the
 `observ_vector`.}

@@ -86,7 +86,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/how_it_works.html">how_it_works</a>
+      <a href="../articles/how_it_works.html">How it works in steps</a>
+    </li>
+    <li>
+      <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
     </li>
   </ul>
 </li>
@@ -141,59 +147,59 @@ used to create a sample for selecting a random match value.</p></td>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>It produces a list of four elements:</p><ul>
-<li><p>`<code>period_1_id</code> position of the <code>o</code> (observation element in the named vector)</p></li>
-<li><p><code>y1_hat</code> value of the <code>o</code></p></li>
-<li><p><code>period_0_id</code> position of the nearest match in the alternatives vector <code>m</code></p></li>
-<li><p><code>y0_hat</code> value of the nearest match.</p></li>
+<li><p>`<code>target_id</code> position of the <code>o</code> (observation element in the named vector)</p></li>
+<li><p><code>target_y_hat</code> value of the <code>o</code></p></li>
+<li><p><code>source_id</code> position of the nearest match in the alternatives vector <code>m</code></p></li>
+<li><p><code>source_y_hat</code> value of the nearest match.</p></li>
 </ul>
 
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>syntheticpanel</span>)
-<span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"a"</span> <span class='kw'>=</span> <span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='fl'>3</span>)</div><div class='output co'>#&gt; $period_1_id
+<span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"a"</span> <span class='kw'>=</span> <span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='fl'>3</span>)</div><div class='output co'>#&gt; $target_id
 #&gt; [1] "a"
 #&gt; 
-#&gt; $y1_hat
+#&gt; $target_y_hat
 #&gt; [1] 10
 #&gt; 
-#&gt; $period_0_id
+#&gt; $source_id
 #&gt; NULL
 #&gt; 
-#&gt; $y0_hat
+#&gt; $source_y_hat
 #&gt; [1] 9
-#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"a"</span> <span class='kw'>=</span> <span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/setNames'>setNames</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='no'>letters</span>[<span class='fl'>1</span>:<span class='fl'>8</span>]), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $period_1_id
+#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"a"</span> <span class='kw'>=</span> <span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/setNames'>setNames</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='no'>letters</span>[<span class='fl'>1</span>:<span class='fl'>8</span>]), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $target_id
 #&gt; [1] "a"
 #&gt; 
-#&gt; $y1_hat
+#&gt; $target_y_hat
 #&gt; [1] 10
 #&gt; 
-#&gt; $period_0_id
+#&gt; $source_id
 #&gt; [1] "c"
 #&gt; 
-#&gt; $y0_hat
+#&gt; $source_y_hat
 #&gt; [1] 10
-#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>9</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/setNames'>setNames</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='no'>letters</span>[<span class='fl'>1</span>:<span class='fl'>8</span>]), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $period_1_id
+#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>9</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/setNames'>setNames</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='no'>letters</span>[<span class='fl'>1</span>:<span class='fl'>8</span>]), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $target_id
 #&gt; NULL
 #&gt; 
-#&gt; $y1_hat
+#&gt; $target_y_hat
 #&gt; [1] 9
 #&gt; 
-#&gt; $period_0_id
+#&gt; $source_id
 #&gt; [1] "b"
 #&gt; 
-#&gt; $y0_hat
+#&gt; $source_y_hat
 #&gt; [1] 9
-#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $period_1_id
+#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $target_id
 #&gt; NULL
 #&gt; 
-#&gt; $y1_hat
+#&gt; $target_y_hat
 #&gt; [1] 10
 #&gt; 
-#&gt; $period_0_id
+#&gt; $source_id
 #&gt; NULL
 #&gt; 
-#&gt; $y0_hat
+#&gt; $source_y_hat
 #&gt; [1] 10
 #&gt; </div></pre>
   </div>

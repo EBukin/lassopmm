@@ -18,10 +18,10 @@ used to create a sample for selecting a random match value.}
 \value{
 It produces a list of four elements:
     \itemize{
-      \item `\code{period_1_id} position of the \code{o} (observation element in the named vector)
-      \item \code{y1_hat} value of the \code{o}
-      \item \code{period_0_id} position of the nearest match in the alternatives vector \code{m}
-      \item \code{y0_hat} value of the nearest match.
+      \item `\code{target_id} position of the \code{o} (observation element in the named vector)
+      \item \code{target_y_hat} value of the \code{o}
+      \item \code{source_id} position of the nearest match in the alternatives vector \code{m}
+      \item \code{source_y_hat} value of the nearest match.
       }
 }
 \description{

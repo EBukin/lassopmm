@@ -56,7 +56,10 @@
       <a href="../articles/how_it_works.html">How it works in steps</a>
     </li>
     <li>
-      <a href="../articles/mice_vs_mi.html">MUltiple imputation statistics in STATA and R</a>
+      <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
     </li>
   </ul>
 </li>
@@ -102,50 +105,66 @@
 <p>To re sample data in a reproducible way, we create bootstrapping vectors. These are then used for sub sampling input data. It all comes to a simple <code>sample</code> function form base R, which re-sample a vector of indexes with the repetitions. It is wrapped around the two functions.</p>
 <p><code><a href="../reference/get_bootstrap_permutation.html">get_bootstrap_permutation()</a></code></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">get_bootstrap_permutation
-<span class="co">#&gt; function(data, n_rep) {</span>
+<span class="co">#&gt; function(data, n_boot) {</span>
+<span class="co">#&gt;   if (is_character(n_boot) ||</span>
+<span class="co">#&gt;     n_boot &lt; 0) {</span>
+<span class="co">#&gt;     stop("n_boot must be numeric or integer and greater than 0.")</span>
+<span class="co">#&gt;   }</span>
 <span class="co">#&gt;   data &lt;-</span>
 <span class="co">#&gt;     data %&gt;%</span>
 <span class="co">#&gt;     dplyr::group_by(group) %&gt;%</span>
 <span class="co">#&gt;     tidyr::nest() %&gt;%</span>
 <span class="co">#&gt;     dplyr::pull(data)</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;   purrr::map(1:n_rep, function(i) {</span>
-<span class="co">#&gt;     purrr::map(data, function(y) {</span>
-<span class="co">#&gt;       sample_vector(y[[1]])</span>
+<span class="co">#&gt;   if (n_boot == 0) {</span>
+<span class="co">#&gt;     purrr::map(1, function(i) {</span>
+<span class="co">#&gt;       purrr::map(data, function(y) {</span>
+<span class="co">#&gt;         y[[1]]</span>
+<span class="co">#&gt;       }) %&gt;%</span>
+<span class="co">#&gt;         unlist()</span>
 <span class="co">#&gt;     }) %&gt;%</span>
-<span class="co">#&gt;       unlist()</span>
-<span class="co">#&gt;   })</span>
+<span class="co">#&gt;       return()</span>
+<span class="co">#&gt;   } else {</span>
+<span class="co">#&gt;     purrr::map(1:n_boot, function(i) {</span>
+<span class="co">#&gt;       purrr::map(data, function(y) {</span>
+<span class="co">#&gt;         sample_vector(y[[1]])</span>
+<span class="co">#&gt;       }) %&gt;%</span>
+<span class="co">#&gt;         unlist()</span>
+<span class="co">#&gt;     }) %&gt;%</span>
+<span class="co">#&gt;       return()</span>
+<span class="co">#&gt;   }</span>
 <span class="co">#&gt; }</span>
-<span class="co">#&gt; &lt;bytecode: 0x000000001942ed38&gt;</span>
+<span class="co">#&gt; &lt;bytecode: 0x0000000018cfc660&gt;</span>
 <span class="co">#&gt; &lt;environment: namespace:syntheticpanel&gt;</span></code></pre></div>
 <p><code><a href="../reference/sample_vector.html">sample_vector()</a></code></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sample_vector
 <span class="co">#&gt; function(ids) {</span>
 <span class="co">#&gt;   sample(ids, size = length(ids), replace = T)</span>
 <span class="co">#&gt; }</span>
-<span class="co">#&gt; &lt;bytecode: 0x00000000195db198&gt;</span>
+<span class="co">#&gt; &lt;bytecode: 0x0000000018ebb6e8&gt;</span>
 <span class="co">#&gt; &lt;environment: namespace:syntheticpanel&gt;</span></code></pre></div>
 <p>As an example, let us create a data fame with two columns <code>id</code> and <code>group</code>. Column group is used for the group wise re-sampling and the column id is returned as an index of the new sample structure.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/sample_vector.html">sample_vector</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>)
-<span class="co">#&gt;  [1]  3  8  7  5  1 10  3  5 10  4</span>
-df &lt;-<span class="st"> </span>tibble<span class="op">::</span><span class="kw"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(<span class="dt">id =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">30</span>, <span class="dt">group =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sort">sort</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, <span class="dv">10</span>)))
+<span class="co">#&gt;  [1]  6  9 10 10  5  9 10  3  7  9</span>
+df &lt;-<span class="st"> </span>tibble<span class="op">::</span><span class="kw"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(<span class="dt">id =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">20</span>, <span class="dt">group =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sort">sort</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>, <span class="dv">10</span>)))
 <span class="kw">glimpse</span>(df)
-<span class="co">#&gt; Observations: 30</span>
+<span class="co">#&gt; Observations: 20</span>
 <span class="co">#&gt; Variables: 2</span>
 <span class="co">#&gt; $ id    &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1...</span>
-<span class="co">#&gt; $ group &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,...</span>
+<span class="co">#&gt; $ group &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2</span>
 <span class="kw"><a href="../reference/get_bootstrap_permutation.html">get_bootstrap_permutation</a></span>(df, <span class="dv">3</span>)
 <span class="co">#&gt; [[1]]</span>
-<span class="co">#&gt;  [1]  7  3  2 10  8  6  3  6  5 10 16 20 14 17 19 16 20 18 16 16 23 25 28</span>
-<span class="co">#&gt; [24] 25 24 24 30 28 29 28</span>
+<span class="co">#&gt;  [1]  3  9  6  3  7  9  4  5  8 10 18 16 18 11 13 19 15 14 16 14</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[2]]</span>
-<span class="co">#&gt;  [1] 10  8  7 10  6  5  6 10  5  3 18 13 20 18 18 19 20 13 17 14 23 21 26</span>
-<span class="co">#&gt; [24] 27 21 29 22 21 25 23</span>
+<span class="co">#&gt;  [1]  2  8  9  1  9  9 10  1  3  9 12 20 15 18 14 19 16 13 18 15</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[3]]</span>
-<span class="co">#&gt;  [1]  2  7  8  5  7  8  2 10  7  1 14 14 17 19 11 18 15 19 13 19 27 25 28</span>
-<span class="co">#&gt; [24] 21 27 23 28 23 24 21</span></code></pre></div>
+<span class="co">#&gt;  [1] 10  6  7  8  4  8  9  5 10 10 17 20 11 11 17 19 16 16 19 14</span></code></pre></div>
+<p>Using 0 as the number of permulation allows us to return dataset identical to the original source data. In such case, bootstrap function simply returns vector with the same index as the input one.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/get_bootstrap_permutation.html">get_bootstrap_permutation</a></span>(df, <span class="dv">0</span>)
+<span class="co">#&gt; [[1]]</span>
+<span class="co">#&gt;  [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20</span></code></pre></div>
 </div>
 <div id="step-2--matching-the-nearest-observation" class="section level2">
 <h2 class="hasAnchor">
@@ -159,39 +178,27 @@ df &lt;-<span class="st"> </span>tibble<span class="op">::</span><span class="kw
 <span class="co">#&gt;   near_obs &lt;- names(sort(abs(m - o), na.last = TRUE, decreasing = F))[1:min(n_near, length(m))]</span>
 <span class="co">#&gt;   match &lt;- sample(near_obs, size = 1, replace = FALSE)</span>
 <span class="co">#&gt;   list(</span>
-<span class="co">#&gt;     period_1_id = names(o),</span>
-<span class="co">#&gt;     y1_hat = o[[1]],</span>
-<span class="co">#&gt;     period_0_id = if (null_names_m) NULL else match,</span>
-<span class="co">#&gt;     y0_hat = m[[match]]</span>
+<span class="co">#&gt;     target_id = names(o),</span>
+<span class="co">#&gt;     target_y_hat = o[[1]],</span>
+<span class="co">#&gt;     source_id = if (null_names_m) NULL else match,</span>
+<span class="co">#&gt;     source_y_hat = m[[match]]</span>
 <span class="co">#&gt;   )</span>
 <span class="co">#&gt; }</span>
-<span class="co">#&gt; &lt;bytecode: 0x000000001902e9a0&gt;</span>
+<span class="co">#&gt; &lt;bytecode: 0x0000000018cb2ee0&gt;</span>
 <span class="co">#&gt; &lt;environment: namespace:syntheticpanel&gt;</span></code></pre></div>
-<p>It works as:</p>
+<p>It works as follows allowing to have named an unnamed vectors supplied into it.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/find_one_near.html">find_one_near</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"a"</span> =<span class="st"> </span><span class="dv">10</span>), <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">8</span><span class="op">:</span><span class="dv">15</span>), <span class="dv">3</span>)
-<span class="co">#&gt; $period_1_id</span>
+<span class="co">#&gt; $target_id</span>
 <span class="co">#&gt; [1] "a"</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; $y1_hat</span>
+<span class="co">#&gt; $target_y_hat</span>
 <span class="co">#&gt; [1] 10</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; $period_0_id</span>
+<span class="co">#&gt; $source_id</span>
 <span class="co">#&gt; NULL</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; $y0_hat</span>
-<span class="co">#&gt; [1] 9</span>
-<span class="kw"><a href="../reference/find_one_near.html">find_one_near</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"a"</span> =<span class="st"> </span><span class="dv">10</span>), <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/setNames">setNames</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">8</span><span class="op">:</span><span class="dv">15</span>), letters[<span class="dv">1</span><span class="op">:</span><span class="dv">8</span>]), <span class="dv">5</span>)
-<span class="co">#&gt; $period_1_id</span>
-<span class="co">#&gt; [1] "a"</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $y1_hat</span>
-<span class="co">#&gt; [1] 10</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $period_0_id</span>
-<span class="co">#&gt; [1] "a"</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; $y0_hat</span>
-<span class="co">#&gt; [1] 8</span></code></pre></div>
+<span class="co">#&gt; $source_y_hat</span>
+<span class="co">#&gt; [1] 9</span></code></pre></div>
 <p><code><a href="../reference/find_near.html">find_near()</a></code> wraps it for matching vector with the vector.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">find_near
 <span class="co">#&gt; function(observ_vector, match_vector, n_near = 5) {</span>
@@ -212,20 +219,20 @@ df &lt;-<span class="st"> </span>tibble<span class="op">::</span><span class="kw
 <span class="co">#&gt;       return()</span>
 <span class="co">#&gt;   }</span>
 <span class="co">#&gt; }</span>
-<span class="co">#&gt; &lt;bytecode: 0x0000000019453738&gt;</span>
+<span class="co">#&gt; &lt;bytecode: 0x0000000018fa8410&gt;</span>
 <span class="co">#&gt; &lt;environment: namespace:syntheticpanel&gt;</span></code></pre></div>
 <p>Producing:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/setNames">setNames</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(<span class="dv">5</span>), <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/character">as.character</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>))
 match_v &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/setNames">setNames</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(<span class="dv">50</span>), <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/character">as.character</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">50</span>))
 <span class="kw"><a href="../reference/find_near.html">find_near</a></span>(obs, match_v, <span class="dt">n_near =</span> <span class="dv">10</span>)
 <span class="co">#&gt; # A tibble: 5 x 4</span>
-<span class="co">#&gt;   period_1_id y1_hat period_0_id  y0_hat</span>
-<span class="co">#&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt;</span>
-<span class="co">#&gt; 1 1           -0.187 37          -0.0201</span>
-<span class="co">#&gt; 2 2           -0.875 26          -0.645 </span>
-<span class="co">#&gt; 3 3            2.17  21           1.90  </span>
-<span class="co">#&gt; 4 4           -1.23  29          -0.892 </span>
-<span class="co">#&gt; 5 5            0.292 48           0.697</span></code></pre></div>
+<span class="co">#&gt;   target_id target_y_hat source_id source_y_hat</span>
+<span class="co">#&gt;   &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;            &lt;dbl&gt;</span>
+<span class="co">#&gt; 1 1                1.17  6                0.595</span>
+<span class="co">#&gt; 2 2                1.77  40               1.56 </span>
+<span class="co">#&gt; 3 3               -1.06  29              -0.774</span>
+<span class="co">#&gt; 4 4               -1.54  25              -1.57 </span>
+<span class="co">#&gt; 5 5               -0.530 14              -0.674</span></code></pre></div>
 </div>
 <div id="step-3--estimating-matches" class="section level2">
 <h2 class="hasAnchor">
@@ -236,47 +243,53 @@ YY &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocument
 WW &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">matrix</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="dv">1</span>, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(mtcars)), <span class="dt">ncol =</span> <span class="dv">1</span>, <span class="dt">nrow =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(mtcars))
 XX1 &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">as.matrix</a></span>(mtcars[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="op">!</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(mtcars) <span class="op">%in%</span><span class="st"> "hp"</span>])</code></pre></div>
 <p>Running simple estimation and returning the output is straightforward. We run it in the full - not reduced form to see all the possible outputs of the function.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a &lt;-<span class="st"> </span><span class="kw"><a href="../reference/estimate_matches.html">estimate_matches</a></span>(<span class="dt">x_mat =</span> XX, <span class="dt">y_mat =</span> YY, <span class="dt">w_mat =</span> WW, <span class="dt">x1_mat =</span> XX1, <span class="dt">reduced =</span> <span class="ot">FALSE</span>, <span class="dt">n_near =</span> <span class="dv">5</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a &lt;-<span class="st"> </span><span class="kw"><a href="../reference/estimate_matches.html">estimate_matches</a></span>(<span class="dt">source_x_mat =</span> XX, 
+                      <span class="dt">source_y_mat =</span> YY, 
+                      <span class="dt">source_w_mat =</span> WW, 
+                      <span class="dt">target_x_mat =</span> XX1, 
+                      <span class="dt">reduced =</span> <span class="ot">FALSE</span>, 
+                      <span class="dt">n_near =</span> <span class="dv">5</span>)
 <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/str">str</a></span>(a, <span class="dt">max.level =</span> <span class="dv">1</span>)
 <span class="co">#&gt; List of 9</span>
-<span class="co">#&gt;  $ x_mat    : num [1:32, 1:10] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...</span>
+<span class="co">#&gt;  $ source_x_mat: num [1:32, 1:10] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...</span>
 <span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span>
-<span class="co">#&gt;  $ w_mat    : num [1:32, 1] 1 1 1 1 1 1 1 1 1 1 ...</span>
-<span class="co">#&gt;  $ y_mat    : num [1:32, 1] 110 110 93 110 175 105 245 62 95 123 ...</span>
-<span class="co">#&gt;  $ x1_mat   : num [1:10, 1:10] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...</span>
+<span class="co">#&gt;  $ source_w_mat: num [1:32, 1] 1 1 1 1 1 1 1 1 1 1 ...</span>
+<span class="co">#&gt;  $ source_y_mat: num [1:32, 1] 110 110 93 110 175 105 245 62 95 123 ...</span>
+<span class="co">#&gt;  $ target_x_mat: num [1:10, 1:10] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...</span>
 <span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span>
-<span class="co">#&gt;  $ lambda_cv:List of 10</span>
+<span class="co">#&gt;  $ lambda_cv   :List of 10</span>
 <span class="co">#&gt;   ..- attr(*, "class")= chr "cv.glmnet"</span>
-<span class="co">#&gt;  $ fit      :List of 12</span>
+<span class="co">#&gt;  $ fit         :List of 12</span>
 <span class="co">#&gt;   ..- attr(*, "class")= chr [1:2] "elnet" "glmnet"</span>
-<span class="co">#&gt;  $ y0_hat   : Named num [1:32] 156.6 152.8 76.9 113.9 177.1 ...</span>
+<span class="co">#&gt;  $ source_y_hat: Named num [1:32] 156.5 152.7 77.2 114.2 177 ...</span>
 <span class="co">#&gt;   ..- attr(*, "names")= chr [1:32] "Mazda RX4" "Mazda RX4 Wag" "Datsun 710" "Hornet 4 Drive" ...</span>
-<span class="co">#&gt;  $ y1_hat   : Named num [1:10] 156.6 152.8 76.9 113.9 177.1 ...</span>
+<span class="co">#&gt;  $ target_y_hat: Named num [1:10] 156.5 152.7 77.2 114.2 177 ...</span>
 <span class="co">#&gt;   ..- attr(*, "names")= chr [1:10] "Mazda RX4" "Mazda RX4 Wag" "Datsun 710" "Hornet 4 Drive" ...</span>
-<span class="co">#&gt;  $ match    :Classes 'tbl_df', 'tbl' and 'data.frame':   10 obs. of  4 variables:</span>
-a<span class="op">$</span>fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>()
+<span class="co">#&gt;  $ match       :Classes 'tbl_df', 'tbl' and 'data.frame':    10 obs. of  4 variables:</span></code></pre></div>
+<p>to extract coefficients of the fited lasso regression, we use:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a<span class="op">$</span>fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>()
 <span class="co">#&gt; 11 x 1 sparse Matrix of class "dgCMatrix"</span>
 <span class="co">#&gt;                      s0</span>
-<span class="co">#&gt; (Intercept) 152.9527895</span>
-<span class="co">#&gt; mpg          -0.1477284</span>
-<span class="co">#&gt; cyl           3.3070490</span>
-<span class="co">#&gt; disp          0.2391838</span>
+<span class="co">#&gt; (Intercept) 150.6021295</span>
+<span class="co">#&gt; mpg          -0.1288473</span>
+<span class="co">#&gt; cyl           3.4363173</span>
+<span class="co">#&gt; disp          0.2366954</span>
 <span class="co">#&gt; drat          .        </span>
 <span class="co">#&gt; wt            .        </span>
-<span class="co">#&gt; qsec         -6.8223942</span>
+<span class="co">#&gt; qsec         -6.7102449</span>
 <span class="co">#&gt; vs            .        </span>
 <span class="co">#&gt; am            .        </span>
 <span class="co">#&gt; gear          .        </span>
-<span class="co">#&gt; carb         15.2272272</span></code></pre></div>
-<p>Same could be done with the bootstrapping. The only difference is that we have to supply to the function a sub sampled version of data (X, Y and W).</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">perm_example &lt;-<span class="st"> </span>purrr<span class="op">::</span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, <span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(<span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(YY), <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(YY), <span class="ot">TRUE</span>))
+<span class="co">#&gt; carb         15.1361626</span></code></pre></div>
+<p>Same could be done with the bootstrapping. The only difference is that we have to supply to the function a sub sampled version of data (X, Y and W). We can do so using <code><a href="https://purrr.tidyverse.org/reference/map.html">purrr::map</a></code> and split-apply-combine strategy.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">perm_example &lt;-<span class="st"> </span>purrr<span class="op">::</span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span>(<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>, <span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sample">sample</a></span>(<span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(YY), <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(YY), <span class="ot">TRUE</span>))
 a_boot &lt;-
 <span class="st">   </span>perm_example <span class="op">%&gt;%</span>
 <span class="st">   </span>purrr<span class="op">::</span><span class="kw"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span>(<span class="op">~</span><span class="st"> </span>syntheticpanel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/syntheticpanel/topics/estimate_matches">estimate_matches</a></span>(
-     <span class="dt">x_mat =</span> XX[.x, ],
-     <span class="dt">y_mat =</span> YY[.x, ],
-     <span class="dt">w_mat =</span> WW[.x, ],
-     <span class="dt">x1_mat =</span> XX1,
+     <span class="dt">source_x_mat =</span> XX[.x, ],
+     <span class="dt">source_y_mat =</span> YY[.x, ],
+     <span class="dt">source_w_mat =</span> WW[.x, ], 
+     <span class="dt">target_x_mat =</span> XX1,
      <span class="dt">reduced =</span> <span class="ot">FALSE</span>,
      <span class="dt">n_near =</span> <span class="dv">5</span>
    ))</code></pre></div>
@@ -286,9 +299,7 @@ a_boot &lt;-
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a_boot <span class="op">%&gt;%</span>
 <span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/str">str</a></span>(<span class="dt">max.level =</span> <span class="dv">1</span>)
-<span class="co">#&gt; List of 5</span>
-<span class="co">#&gt;  $ :List of 9</span>
-<span class="co">#&gt;  $ :List of 9</span>
+<span class="co">#&gt; List of 3</span>
 <span class="co">#&gt;  $ :List of 9</span>
 <span class="co">#&gt;  $ :List of 9</span>
 <span class="co">#&gt;  $ :List of 9</span></code></pre></div>
@@ -297,49 +308,34 @@ a_boot &lt;-
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a_boot[[<span class="dv">3</span>]]<span class="op">$</span>fit
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) </span>
+<span class="co">#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      Df   %Dev Lambda</span>
-<span class="co">#&gt; [1,]  9 0.9681  0.204</span></code></pre></div>
+<span class="co">#&gt; [1,]  5 0.9025  4.857</span></code></pre></div>
 <ul>
 <li>Doing the same with each single bootstrap iteration</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a_boot <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">map</span>(<span class="st">"fit"</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">a_boot <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">map</span>(<span class="st">"fit"</span>)
 <span class="co">#&gt; [[1]]</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) </span>
+<span class="co">#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) </span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;      Df   %Dev Lambda</span>
-<span class="co">#&gt; [1,]  7 0.9282  0.796</span>
+<span class="co">#&gt;      Df  %Dev Lambda</span>
+<span class="co">#&gt; [1,]  9 0.944 0.7722</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[2]]</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) </span>
+<span class="co">#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      Df   %Dev Lambda</span>
-<span class="co">#&gt; [1,]  5 0.8597  5.505</span>
+<span class="co">#&gt; [1,]  5 0.9335  1.252</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[3]]</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) </span>
+<span class="co">#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      Df   %Dev Lambda</span>
-<span class="co">#&gt; [1,]  9 0.9681  0.204</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; [[4]]</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;      Df   %Dev Lambda</span>
-<span class="co">#&gt; [1,]  9 0.9426 0.8415</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; [[5]]</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;      Df   %Dev Lambda</span>
-<span class="co">#&gt; [1,]  3 0.8928  3.219</span></code></pre></div>
+<span class="co">#&gt; [1,]  5 0.9025  4.857</span></code></pre></div>
 <ul>
 <li>Extracting coefficients from each single bootstrap iteration</li>
 </ul>
@@ -349,77 +345,47 @@ a_boot &lt;-
 <span class="co">#&gt; [[1]]</span>
 <span class="co">#&gt; 11 x 1 sparse Matrix of class "dgCMatrix"</span>
 <span class="co">#&gt;                      s0</span>
-<span class="co">#&gt; (Intercept) 214.8973376</span>
-<span class="co">#&gt; mpg          -6.6575734</span>
+<span class="co">#&gt; (Intercept) 119.6442864</span>
+<span class="co">#&gt; mpg          -3.1172083</span>
 <span class="co">#&gt; cyl           .        </span>
-<span class="co">#&gt; disp          0.4868161</span>
-<span class="co">#&gt; drat          .        </span>
-<span class="co">#&gt; wt          -38.8230981</span>
-<span class="co">#&gt; qsec         -1.1749858</span>
-<span class="co">#&gt; vs           16.7963616</span>
-<span class="co">#&gt; am            .        </span>
-<span class="co">#&gt; gear         13.8593129</span>
-<span class="co">#&gt; carb         13.6522093</span>
+<span class="co">#&gt; disp          0.5250979</span>
+<span class="co">#&gt; drat         -5.3824371</span>
+<span class="co">#&gt; wt          -27.3319747</span>
+<span class="co">#&gt; qsec         -1.8870397</span>
+<span class="co">#&gt; vs           21.1473007</span>
+<span class="co">#&gt; am           12.2531522</span>
+<span class="co">#&gt; gear         12.2375857</span>
+<span class="co">#&gt; carb         16.8840291</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[2]]</span>
 <span class="co">#&gt; 11 x 1 sparse Matrix of class "dgCMatrix"</span>
-<span class="co">#&gt;                       s0</span>
-<span class="co">#&gt; (Intercept) 135.73662928</span>
-<span class="co">#&gt; mpg          -1.25922241</span>
-<span class="co">#&gt; cyl           7.50071531</span>
-<span class="co">#&gt; disp          0.08847563</span>
-<span class="co">#&gt; drat          .         </span>
-<span class="co">#&gt; wt            8.57280528</span>
-<span class="co">#&gt; qsec         -3.84417614</span>
-<span class="co">#&gt; vs            .         </span>
-<span class="co">#&gt; am            .         </span>
-<span class="co">#&gt; gear          .         </span>
-<span class="co">#&gt; carb          .         </span>
+<span class="co">#&gt;                      s0</span>
+<span class="co">#&gt; (Intercept) 152.2869291</span>
+<span class="co">#&gt; mpg          -4.4604954</span>
+<span class="co">#&gt; cyl           .        </span>
+<span class="co">#&gt; disp          0.3142768</span>
+<span class="co">#&gt; drat          .        </span>
+<span class="co">#&gt; wt          -16.6919821</span>
+<span class="co">#&gt; qsec          .        </span>
+<span class="co">#&gt; vs            .        </span>
+<span class="co">#&gt; am           21.2491505</span>
+<span class="co">#&gt; gear          .        </span>
+<span class="co">#&gt; carb         21.4101804</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[3]]</span>
 <span class="co">#&gt; 11 x 1 sparse Matrix of class "dgCMatrix"</span>
 <span class="co">#&gt;                      s0</span>
-<span class="co">#&gt; (Intercept) -28.1567946</span>
-<span class="co">#&gt; mpg          -0.4699459</span>
-<span class="co">#&gt; cyl           7.9612610</span>
-<span class="co">#&gt; disp          0.5773609</span>
-<span class="co">#&gt; drat          2.3501104</span>
-<span class="co">#&gt; wt          -59.1454100</span>
-<span class="co">#&gt; qsec          4.8884048</span>
-<span class="co">#&gt; vs            2.3091007</span>
-<span class="co">#&gt; am           -0.8025503</span>
-<span class="co">#&gt; gear          .        </span>
-<span class="co">#&gt; carb         32.5341885</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; [[4]]</span>
-<span class="co">#&gt; 11 x 1 sparse Matrix of class "dgCMatrix"</span>
-<span class="co">#&gt;                      s0</span>
-<span class="co">#&gt; (Intercept) -92.5165185</span>
-<span class="co">#&gt; mpg          -0.2498715</span>
-<span class="co">#&gt; cyl          14.2962527</span>
-<span class="co">#&gt; disp          0.3234814</span>
-<span class="co">#&gt; drat        -10.3962388</span>
-<span class="co">#&gt; wt           -0.6381740</span>
-<span class="co">#&gt; qsec          .        </span>
-<span class="co">#&gt; vs            9.4849415</span>
-<span class="co">#&gt; am           26.8603474</span>
-<span class="co">#&gt; gear         18.4625832</span>
-<span class="co">#&gt; carb         13.7151083</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; [[5]]</span>
-<span class="co">#&gt; 11 x 1 sparse Matrix of class "dgCMatrix"</span>
-<span class="co">#&gt;                      s0</span>
-<span class="co">#&gt; (Intercept) 147.3341958</span>
-<span class="co">#&gt; mpg           .        </span>
-<span class="co">#&gt; cyl           .        </span>
-<span class="co">#&gt; disp          0.2877211</span>
+<span class="co">#&gt; (Intercept) 319.3669782</span>
+<span class="co">#&gt; mpg          -1.4188401</span>
+<span class="co">#&gt; cyl           5.0587068</span>
+<span class="co">#&gt; disp          0.1197766</span>
 <span class="co">#&gt; drat          .        </span>
 <span class="co">#&gt; wt            .        </span>
-<span class="co">#&gt; qsec         -7.0189884</span>
+<span class="co">#&gt; qsec        -12.6055522</span>
 <span class="co">#&gt; vs            .        </span>
 <span class="co">#&gt; am            .        </span>
 <span class="co">#&gt; gear          .        </span>
-<span class="co">#&gt; carb         20.4700249</span></code></pre></div>
+<span class="co">#&gt; carb          8.8485527</span></code></pre></div>
 <ul>
 <li>Combine all coefficients in a table:</li>
 </ul>
@@ -428,82 +394,85 @@ a_boot &lt;-
 <span class="st"> </span><span class="kw">map</span>(broom<span class="op">::</span>tidy) <span class="op">%&gt;%</span>
 <span class="st"> </span><span class="kw">map</span>(<span class="op">~</span><span class="st"> </span><span class="kw">select</span>(.x, term, estimate)) <span class="op">%&gt;%</span>
 <span class="st"> </span><span class="kw">map2</span>(<span class="dt">.y =</span> <span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(.), <span class="op">~</span><span class="st"> </span><span class="kw">rename_at</span>(.x, <span class="kw">vars</span>(estimate), <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="op">~</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste0</a></span>(., <span class="st">"_"</span>, .y)))) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">reduce</span>(full_join)
-<span class="co">#&gt; Joining, by = "term"</span>
-<span class="co">#&gt; Joining, by = "term"</span>
-<span class="co">#&gt; Joining, by = "term"</span>
-<span class="co">#&gt; Joining, by = "term"</span>
-<span class="co">#&gt; # A tibble: 11 x 6</span>
-<span class="co">#&gt;    term        estimate_1 estimate_2 estimate_3 estimate_4 estimate_5</span>
-<span class="co">#&gt;    &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 (Intercept)    215.      136.        -28.2      -92.5      147.   </span>
-<span class="co">#&gt;  2 mpg             -6.66     -1.26       -0.470     -0.250     NA    </span>
-<span class="co">#&gt;  3 disp             0.487     0.0885      0.577      0.323      0.288</span>
-<span class="co">#&gt;  4 wt             -38.8       8.57      -59.1       -0.638     NA    </span>
-<span class="co">#&gt;  5 qsec            -1.17     -3.84        4.89      NA         -7.02 </span>
-<span class="co">#&gt;  6 vs              16.8      NA           2.31       9.48      NA    </span>
-<span class="co">#&gt;  7 gear            13.9      NA          NA         18.5       NA    </span>
-<span class="co">#&gt;  8 carb            13.7      NA          32.5       13.7       20.5  </span>
-<span class="co">#&gt;  9 cyl             NA         7.50        7.96      14.3       NA    </span>
-<span class="co">#&gt; 10 drat            NA        NA           2.35     -10.4       NA    </span>
-<span class="co">#&gt; 11 am              NA        NA          -0.803     26.9       NA</span></code></pre></div>
+<span class="st"> </span><span class="kw">reduce</span>(full_join, <span class="dt">by =</span> <span class="st">"term"</span>)
+<span class="co">#&gt; # A tibble: 11 x 4</span>
+<span class="co">#&gt;    term        estimate_1 estimate_2 estimate_3</span>
+<span class="co">#&gt;    &lt;chr&gt;            &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 (Intercept)    120.       152.       319.   </span>
+<span class="co">#&gt;  2 mpg             -3.12      -4.46      -1.42 </span>
+<span class="co">#&gt;  3 disp             0.525      0.314      0.120</span>
+<span class="co">#&gt;  4 drat            -5.38      NA         NA    </span>
+<span class="co">#&gt;  5 wt             -27.3      -16.7       NA    </span>
+<span class="co">#&gt;  6 qsec            -1.89      NA        -12.6  </span>
+<span class="co">#&gt;  7 vs              21.1       NA         NA    </span>
+<span class="co">#&gt;  8 am              12.3       21.2       NA    </span>
+<span class="co">#&gt;  9 gear            12.2       NA         NA    </span>
+<span class="co">#&gt; 10 carb            16.9       21.4        8.85 </span>
+<span class="co">#&gt; 11 cyl             NA         NA          5.06</span></code></pre></div>
 <p>The source code of the function looks like:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">estimate_matches
-<span class="co">#&gt; function(x_mat,</span>
-<span class="co">#&gt;              y_mat,</span>
-<span class="co">#&gt;              w_mat,</span>
-<span class="co">#&gt;              x1_mat,</span>
+<span class="co">#&gt; function(source_x_mat,</span>
+<span class="co">#&gt;              source_y_mat,</span>
+<span class="co">#&gt;              source_w_mat,</span>
+<span class="co">#&gt;              target_x_mat,</span>
 <span class="co">#&gt;              n_near = 5,</span>
-<span class="co">#&gt;              reduced = TRUE,</span>
-<span class="co">#&gt;              n_folds = 10) {</span>
-<span class="co">#&gt;     lambda_cv &lt;-</span>
-<span class="co">#&gt;       glmnet::cv.glmnet(</span>
-<span class="co">#&gt;         x = x_mat,</span>
-<span class="co">#&gt;         y = y_mat,</span>
-<span class="co">#&gt;         weights = w_mat,</span>
-<span class="co">#&gt;         type.measure = "mse",</span>
-<span class="co">#&gt;         nfolds = n_folds</span>
-<span class="co">#&gt;       )</span>
+<span class="co">#&gt;              n_folds = 10,</span>
+<span class="co">#&gt;              force_lambda = NULL,</span>
+<span class="co">#&gt;              reduced = TRUE) {</span>
+<span class="co">#&gt;     if (is.null(force_lambda) || is.na(force_lambda)) {</span>
+<span class="co">#&gt;       lambda_cv &lt;-</span>
+<span class="co">#&gt;         glmnet::cv.glmnet(</span>
+<span class="co">#&gt;           x = source_x_mat,</span>
+<span class="co">#&gt;           y = source_y_mat,</span>
+<span class="co">#&gt;           weights = source_w_mat,</span>
+<span class="co">#&gt;           type.measure = "mse",</span>
+<span class="co">#&gt;           nfolds = n_folds</span>
+<span class="co">#&gt;         )</span>
+<span class="co">#&gt;     } else {</span>
+<span class="co">#&gt;       lambda_cv &lt;- list()</span>
+<span class="co">#&gt;       lambda_cv$lambda.min &lt;- force_lambda</span>
+<span class="co">#&gt;     }</span>
+<span class="co">#&gt; </span>
 <span class="co">#&gt;     fit &lt;-</span>
 <span class="co">#&gt;       glmnet::glmnet(</span>
-<span class="co">#&gt;         x = x_mat,</span>
-<span class="co">#&gt;         y = y_mat,</span>
-<span class="co">#&gt;         weights = w_mat,</span>
+<span class="co">#&gt;         x = source_x_mat,</span>
+<span class="co">#&gt;         y = source_y_mat,</span>
+<span class="co">#&gt;         weights = source_w_mat,</span>
 <span class="co">#&gt;         alpha = 1,</span>
 <span class="co">#&gt;         lambda = lambda_cv$lambda.min</span>
 <span class="co">#&gt;       )</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;     y0_hat &lt;- stats::predict(fit, x_mat)[, 1]</span>
-<span class="co">#&gt;     y1_hat &lt;- stats::predict(fit, x1_mat)[, 1]</span>
+<span class="co">#&gt;     source_y_hat &lt;- stats::predict(fit, newx = source_x_mat)[, 1]</span>
+<span class="co">#&gt;     target_y_hat &lt;- stats::predict(fit, newx = target_x_mat)[, 1]</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     # Check that predict works the right way</span>
-<span class="co">#&gt;     # t(as.matrix(coef(fit))) %*% t(cbind(rep(1, nrow(x1_mat)), x1_mat))</span>
+<span class="co">#&gt;     # t(as.matrix(coef(fit))) %*% t(cbind(rep(1, nrow(target_x_mat)), target_x_mat))</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;     match &lt;- find_near(y1_hat, y0_hat, n_near)</span>
+<span class="co">#&gt;     match &lt;- find_near(target_y_hat, source_y_hat, n_near)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     if (!reduced) {</span>
 <span class="co">#&gt;       return(</span>
 <span class="co">#&gt;         list(</span>
-<span class="co">#&gt;           x_mat = x_mat,</span>
-<span class="co">#&gt;           w_mat = w_mat,</span>
-<span class="co">#&gt;           y_mat = y_mat,</span>
-<span class="co">#&gt;           x1_mat = x1_mat,</span>
+<span class="co">#&gt;           source_x_mat = source_x_mat,</span>
+<span class="co">#&gt;           source_w_mat = source_w_mat,</span>
+<span class="co">#&gt;           source_y_mat = source_y_mat,</span>
+<span class="co">#&gt;           target_x_mat = target_x_mat,</span>
 <span class="co">#&gt;           lambda_cv = lambda_cv,</span>
 <span class="co">#&gt;           fit = fit,</span>
-<span class="co">#&gt;           y0_hat = y0_hat,</span>
-<span class="co">#&gt;           y1_hat = y1_hat,</span>
+<span class="co">#&gt;           source_y_hat = source_y_hat,</span>
+<span class="co">#&gt;           target_y_hat = target_y_hat,</span>
 <span class="co">#&gt;           match = match</span>
 <span class="co">#&gt;         )</span>
 <span class="co">#&gt;       )</span>
 <span class="co">#&gt;     } else {</span>
 <span class="co">#&gt;       return(list(</span>
-<span class="co">#&gt;         y0_hat = y0_hat,</span>
-<span class="co">#&gt;         y1_hat = y1_hat,</span>
+<span class="co">#&gt;         source_y_hat = source_y_hat,</span>
+<span class="co">#&gt;         target_y_hat = target_y_hat,</span>
 <span class="co">#&gt;         match = match</span>
 <span class="co">#&gt;       ))</span>
 <span class="co">#&gt;     }</span>
 <span class="co">#&gt;   }</span>
-<span class="co">#&gt; &lt;bytecode: 0x0000000013cd0710&gt;</span>
+<span class="co">#&gt; &lt;bytecode: 0x000000001846b7f0&gt;</span>
 <span class="co">#&gt; &lt;environment: namespace:syntheticpanel&gt;</span></code></pre></div>
 </div>
 <div id="step-3--wrap-up-around-input-as-data-frames-and-multiple-imputations-data-as-an-output-" class="section level2">
@@ -569,40 +538,43 @@ bt_groups &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rd
 n_nearest &lt;-<span class="st"> </span><span class="dv">1</span>    <span class="co"># numebr of the nearest observations to drow a random match</span>
 <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Random">set.seed</a></span>(<span class="dv">11223344</span>)
 imputation &lt;-
-<span class="st">  </span><span class="kw"><a href="../reference/impute_data.html">impute_data</a></span>(<span class="dt">period_0 =</span> p_0_exmple, 
-              <span class="dt">period_1 =</span> p_1_exmple,
-              <span class="dt">dep_var =</span> dep, <span class="dt">indep_var =</span> indep, <span class="dt">weight_var =</span> weight,
-              <span class="dt">group_boot_var =</span> bt_groups,
-              <span class="dt">extra_var =</span> extrar,
-              <span class="dt">n_boot =</span> <span class="dv">5</span>, <span class="co"># Numebr of bootstrap iterations</span>
-              <span class="dt">n_near =</span> <span class="dv">1</span>)
+<span class="st">  </span><span class="kw"><a href="../reference/find_source_for_target.html">find_source_for_target</a></span>(
+    <span class="dt">source =</span> p_0_exmple, 
+    <span class="dt">target =</span> p_1_exmple,
+    <span class="dt">dep_var =</span> dep, 
+    <span class="dt">indep_var =</span> indep, 
+    <span class="dt">weight_var =</span> weight,
+    <span class="dt">group_boot_var =</span> bt_groups,
+    <span class="dt">extra_var =</span> extrar,
+    <span class="dt">n_boot =</span> <span class="dv">5</span>, <span class="co"># Numebr of bootstrap iterations</span>
+    <span class="dt">n_near =</span> <span class="dv">1</span>)
 
 <span class="kw">glimpse</span>(imputation)
 <span class="co">#&gt; Observations: 42</span>
 <span class="co">#&gt; Variables: 23</span>
-<span class="co">#&gt; $ .imp                  &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1...</span>
-<span class="co">#&gt; $ .id                   &lt;chr&gt; "1", "2", "3", "4", "5", "6", "7", "1", ...</span>
-<span class="co">#&gt; $ make                  &lt;chr&gt; "Renault Le Car", "VW Diesel", "Merc. Mo...</span>
-<span class="co">#&gt; $ price                 &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ...</span>
-<span class="co">#&gt; $ mpg                   &lt;dbl&gt; 26, 41, 18, 28, 19, 17, 12, 26, 41, 18, ...</span>
-<span class="co">#&gt; $ rep78                 &lt;dbl&gt; 3, 5, 3, 4, 3, 2, 3, 3, 5, 3, 4, 3, 2, 3...</span>
-<span class="co">#&gt; $ headroom              &lt;dbl&gt; 3.0, 3.0, 3.0, 1.5, 2.0, 4.5, 2.5, 3.0, ...</span>
-<span class="co">#&gt; $ trunk                 &lt;dbl&gt; 10, 15, 15, 9, 16, 21, 18, 10, 15, 15, 9...</span>
-<span class="co">#&gt; $ weight                &lt;dbl&gt; 1830, 2040, 3370, 1800, 3210, 3740, 4720...</span>
-<span class="co">#&gt; $ length                &lt;dbl&gt; 142, 155, 198, 147, 201, 220, 230, 142, ...</span>
-<span class="co">#&gt; $ turn                  &lt;dbl&gt; 34, 35, 41, 33, 45, 46, 48, 34, 35, 41, ...</span>
-<span class="co">#&gt; $ displacement          &lt;dbl&gt; 79, 90, 250, 98, 231, 225, 400, 79, 90, ...</span>
-<span class="co">#&gt; $ gear_ratio            &lt;dbl&gt; 3.72, 3.78, 2.43, 3.15, 2.93, 2.94, 2.47...</span>
-<span class="co">#&gt; $ foreign               &lt;dbl&gt; 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0...</span>
-<span class="co">#&gt; $ psu                   &lt;dbl&gt; 7, 7, 4, 3, 5, 3, 3, 7, 7, 4, 3, 5, 3, 3...</span>
-<span class="co">#&gt; $ numobs                &lt;dbl&gt; 65, 71, 32, 24, 49, 23, 27, 65, 71, 32, ...</span>
-<span class="co">#&gt; $ samples               &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...</span>
-<span class="co">#&gt; $ numobs11              &lt;dbl&gt; 75, 76, 77, 78, 79, 80, 81, 75, 76, 77, ...</span>
-<span class="co">#&gt; $ y1_hat                &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 5137.791, 55...</span>
-<span class="co">#&gt; $ period_0_id           &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, "65", "39", ...</span>
-<span class="co">#&gt; $ y0_hat                &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 5137.791, 54...</span>
-<span class="co">#&gt; $ price_period_0        &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 3895, 4181, ...</span>
-<span class="co">#&gt; $ displacement_period_0 &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 79, 231, 250...</span>
+<span class="co">#&gt; $ .imp                &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, ...</span>
+<span class="co">#&gt; $ .id                 &lt;chr&gt; "1", "2", "3", "4", "5", "6", "7", "1", "2...</span>
+<span class="co">#&gt; $ make                &lt;chr&gt; "Renault Le Car", "VW Diesel", "Merc. Mona...</span>
+<span class="co">#&gt; $ price               &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA...</span>
+<span class="co">#&gt; $ mpg                 &lt;dbl&gt; 26, 41, 18, 28, 19, 17, 12, 26, 41, 18, 28...</span>
+<span class="co">#&gt; $ rep78               &lt;dbl&gt; 3, 5, 3, 4, 3, 2, 3, 3, 5, 3, 4, 3, 2, 3, ...</span>
+<span class="co">#&gt; $ headroom            &lt;dbl&gt; 3.0, 3.0, 3.0, 1.5, 2.0, 4.5, 2.5, 3.0, 3....</span>
+<span class="co">#&gt; $ trunk               &lt;dbl&gt; 10, 15, 15, 9, 16, 21, 18, 10, 15, 15, 9, ...</span>
+<span class="co">#&gt; $ weight              &lt;dbl&gt; 1830, 2040, 3370, 1800, 3210, 3740, 4720, ...</span>
+<span class="co">#&gt; $ length              &lt;dbl&gt; 142, 155, 198, 147, 201, 220, 230, 142, 15...</span>
+<span class="co">#&gt; $ turn                &lt;dbl&gt; 34, 35, 41, 33, 45, 46, 48, 34, 35, 41, 33...</span>
+<span class="co">#&gt; $ displacement        &lt;dbl&gt; 79, 90, 250, 98, 231, 225, 400, 79, 90, 25...</span>
+<span class="co">#&gt; $ gear_ratio          &lt;dbl&gt; 3.72, 3.78, 2.43, 3.15, 2.93, 2.94, 2.47, ...</span>
+<span class="co">#&gt; $ foreign             &lt;dbl&gt; 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, ...</span>
+<span class="co">#&gt; $ psu                 &lt;dbl&gt; 7, 7, 4, 3, 5, 3, 3, 7, 7, 4, 3, 5, 3, 3, ...</span>
+<span class="co">#&gt; $ numobs              &lt;dbl&gt; 65, 71, 32, 24, 49, 23, 27, 65, 71, 32, 24...</span>
+<span class="co">#&gt; $ samples             &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...</span>
+<span class="co">#&gt; $ numobs11            &lt;dbl&gt; 75, 76, 77, 78, 79, 80, 81, 75, 76, 77, 78...</span>
+<span class="co">#&gt; $ target_y_hat        &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 5137.791, 5504...</span>
+<span class="co">#&gt; $ source_id           &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, "65", "39", "3...</span>
+<span class="co">#&gt; $ source_y_hat        &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 5137.791, 5410...</span>
+<span class="co">#&gt; $ price_source        &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 3895, 4181, 45...</span>
+<span class="co">#&gt; $ displacement_source &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 79, 231, 250, ...</span>
 
 <span class="co"># Summary of the number of observations per one ID</span>
 <span class="co"># 6 in total meaning that 1 observation stands for original</span>
@@ -634,9 +606,9 @@ imputation <span class="op">%&gt;%</span><span class="st"> </span><span class="k
 <span class="co">#&gt; 5     4     7</span>
 <span class="co">#&gt; 6     5     7</span></code></pre></div>
 <p>Source code of the function is:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">impute_data
-<span class="co">#&gt; function(period_0,</span>
-<span class="co">#&gt;              period_1,</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">find_source_for_target
+<span class="co">#&gt; function(source,</span>
+<span class="co">#&gt;              target,</span>
 <span class="co">#&gt;              dep_var,</span>
 <span class="co">#&gt;              indep_var,</span>
 <span class="co">#&gt;              weight_var = NULL,</span>
@@ -645,68 +617,69 @@ imputation <span class="op">%&gt;%</span><span class="st"> </span><span class="k
 <span class="co">#&gt;              n_boot = 5,</span>
 <span class="co">#&gt;              group_boot_var = NULL,</span>
 <span class="co">#&gt;              force_boot = NULL,</span>
+<span class="co">#&gt;              force_lambda = NULL,</span>
 <span class="co">#&gt;              n_folds = 10,</span>
 <span class="co">#&gt;              reduced = TRUE) {</span>
-<span class="co">#&gt;     y_mat &lt;- period_0 %&gt;% dplyr::select(dep_var) %&gt;% as.matrix()</span>
-<span class="co">#&gt;     x_mat &lt;- period_0 %&gt;% dplyr::select(indep_var) %&gt;% as.matrix()</span>
-<span class="co">#&gt;     x1_mat &lt;- period_1 %&gt;% dplyr::select(indep_var) %&gt;% as.matrix()</span>
+<span class="co">#&gt;     y_mat &lt;- source %&gt;% dplyr::select(dep_var) %&gt;% as.matrix()</span>
+<span class="co">#&gt;     x_mat &lt;- source %&gt;% dplyr::select(indep_var) %&gt;% as.matrix()</span>
+<span class="co">#&gt;     x1_mat &lt;- target %&gt;% dplyr::select(indep_var) %&gt;% as.matrix()</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     rownames(y_mat) &lt;- 1:nrow(y_mat)</span>
 <span class="co">#&gt;     rownames(x_mat) &lt;- 1:nrow(x_mat)</span>
 <span class="co">#&gt;     rownames(x1_mat) &lt;- 1:nrow(x1_mat)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     # list of variables to add to the period 1 data from period 0.</span>
-<span class="co">#&gt;     vars_to_bring &lt;- names(period_0)[names(period_0) %in% c(dep_var, extra_var)]</span>
+<span class="co">#&gt;     vars_to_bring &lt;- names(source)[names(source) %in% c(dep_var, extra_var)]</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     # Here we have to cheack if all selected variables appear in both datasets</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     # Checking weighting var</span>
 <span class="co">#&gt;     if (is.na(weight_var) || is.null(weight_var)) {</span>
 <span class="co">#&gt;       message("Default weights equal to all observations are used.")</span>
-<span class="co">#&gt;     } else if (!weight_var %in% names(period_0)) {</span>
+<span class="co">#&gt;     } else if (!weight_var %in% names(source)) {</span>
 <span class="co">#&gt;       warning(paste0(</span>
 <span class="co">#&gt;         "Weight variable '",</span>
 <span class="co">#&gt;         weight_var,</span>
 <span class="co">#&gt;         "' does not exist in the data.\n",</span>
 <span class="co">#&gt;         "Default weights equal to all observations are used instead."</span>
 <span class="co">#&gt;       ))</span>
-<span class="co">#&gt;       w_mat &lt;- matrix(rep(1, nrow(period_0)), nrow = nrow(period_0), ncol = 1)</span>
+<span class="co">#&gt;       w_mat &lt;- matrix(rep(1, nrow(source)), nrow = nrow(source), ncol = 1)</span>
 <span class="co">#&gt;     } else {</span>
-<span class="co">#&gt;       w_mat &lt;- period_0 %&gt;% dplyr::select(weight_var) %&gt;% as.matrix()</span>
+<span class="co">#&gt;       w_mat &lt;- source %&gt;% dplyr::select(weight_var) %&gt;% as.matrix()</span>
 <span class="co">#&gt;     }</span>
 <span class="co">#&gt;     rownames(w_mat) &lt;- 1:nrow(w_mat)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     # Creating bootstrap groups</span>
-<span class="co">#&gt;     if (any(!group_boot_var %in% names(period_0)) &amp;&amp;</span>
-<span class="co">#&gt;       !all(!group_boot_var %in% names(period_0)) &amp;&amp;</span>
+<span class="co">#&gt;     if (any(!group_boot_var %in% names(source)) &amp;&amp;</span>
+<span class="co">#&gt;       !all(!group_boot_var %in% names(source)) &amp;&amp;</span>
 <span class="co">#&gt;       !is.null(group_boot_var) &amp;&amp;</span>
 <span class="co">#&gt;       !is.na(group_boot_var)) {</span>
 <span class="co">#&gt;       warning(</span>
 <span class="co">#&gt;         paste0(</span>
 <span class="co">#&gt;           "Variable(s) '",</span>
-<span class="co">#&gt;           paste0(group_boot_var[!group_boot_var %in% names(period_0)], collapse = "', '"),</span>
+<span class="co">#&gt;           paste0(group_boot_var[!group_boot_var %in% names(source)], collapse = "', '"),</span>
 <span class="co">#&gt;           "' are not listed in the `period 0` dataset.\n",</span>
 <span class="co">#&gt;           "Only variable(s) '",</span>
-<span class="co">#&gt;           paste0(group_boot_var[group_boot_var %in% names(period_0)], collapse = "', '"),</span>
+<span class="co">#&gt;           paste0(group_boot_var[group_boot_var %in% names(source)], collapse = "', '"),</span>
 <span class="co">#&gt;           "' will be used for creating grouped bootstrap permulation vectors."</span>
 <span class="co">#&gt;         )</span>
 <span class="co">#&gt;       )</span>
-<span class="co">#&gt;     } else if (all(!group_boot_var %in% names(period_0)) &amp;&amp;</span>
+<span class="co">#&gt;     } else if (all(!group_boot_var %in% names(source)) &amp;&amp;</span>
 <span class="co">#&gt;       !is.null(group_boot_var) &amp;&amp;</span>
 <span class="co">#&gt;       !is.na(group_boot_var)) {</span>
 <span class="co">#&gt;       warning(</span>
 <span class="co">#&gt;         paste0(</span>
 <span class="co">#&gt;           "Variable(s) '",</span>
-<span class="co">#&gt;           paste0(group_boot_var[!group_boot_var %in% names(period_0)], collapse = "', '"),</span>
+<span class="co">#&gt;           paste0(group_boot_var[!group_boot_var %in% names(source)], collapse = "', '"),</span>
 <span class="co">#&gt;           "' are not listed in the `period 0` dataset.\n",</span>
 <span class="co">#&gt;           "No grouped bootstrap permulation is applied."</span>
 <span class="co">#&gt;         )</span>
 <span class="co">#&gt;       )</span>
 <span class="co">#&gt;     }</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;     if (any(group_boot_var %in% names(period_0))) {</span>
+<span class="co">#&gt;     if (any(group_boot_var %in% names(source))) {</span>
 <span class="co">#&gt;       group_mat &lt;-</span>
-<span class="co">#&gt;         period_0 %&gt;%</span>
+<span class="co">#&gt;         source %&gt;%</span>
 <span class="co">#&gt;         dplyr::mutate(ids = row_number()) %&gt;%</span>
 <span class="co">#&gt;         dplyr::group_by(group_boot_var[group_boot_var %in% names(.)]) %&gt;%</span>
 <span class="co">#&gt;         dplyr::mutate(group = sum(ids)) %&gt;%</span>
@@ -714,7 +687,7 @@ imputation <span class="op">%&gt;%</span><span class="st"> </span><span class="k
 <span class="co">#&gt;         dplyr::select(ids, group)</span>
 <span class="co">#&gt;     } else {</span>
 <span class="co">#&gt;       group_mat &lt;-</span>
-<span class="co">#&gt;         period_0 %&gt;%</span>
+<span class="co">#&gt;         source %&gt;%</span>
 <span class="co">#&gt;         dplyr::mutate(</span>
 <span class="co">#&gt;           ids = row_number(),</span>
 <span class="co">#&gt;           group = 1</span>
@@ -734,13 +707,14 @@ imputation <span class="op">%&gt;%</span><span class="st"> </span><span class="k
 <span class="co">#&gt;     all_boots &lt;-</span>
 <span class="co">#&gt;       boot_perm_vector %&gt;%</span>
 <span class="co">#&gt;       purrr::map(~ estimate_matches(</span>
-<span class="co">#&gt;         x_mat = x_mat[.x, ],</span>
-<span class="co">#&gt;         y_mat = y_mat[.x, ],</span>
-<span class="co">#&gt;         w_mat = w_mat[.x, ],</span>
-<span class="co">#&gt;         x1_mat = x1_mat,</span>
+<span class="co">#&gt;         source_x_mat = x_mat[.x, ],</span>
+<span class="co">#&gt;         source_y_mat = y_mat[.x, ],</span>
+<span class="co">#&gt;         source_w_mat = w_mat[.x, ],</span>
+<span class="co">#&gt;         target_x_mat = x1_mat,</span>
 <span class="co">#&gt;         reduced = reduced,</span>
 <span class="co">#&gt;         n_near = n_near,</span>
-<span class="co">#&gt;         n_folds = n_folds</span>
+<span class="co">#&gt;         n_folds = n_folds,</span>
+<span class="co">#&gt;         force_lambda = force_lambda</span>
 <span class="co">#&gt;       ))</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     # constructing dataframe, where all bootstraps are matched to the actual observations</span>
@@ -750,17 +724,17 @@ imputation <span class="op">%&gt;%</span><span class="st"> </span><span class="k
 <span class="co">#&gt;       tibble::enframe(".imp") %&gt;%</span>
 <span class="co">#&gt;       tidyr::unnest() %&gt;%</span>
 <span class="co">#&gt;       dplyr::left_join(</span>
-<span class="co">#&gt;         period_0 %&gt;%</span>
-<span class="co">#&gt;           dplyr::mutate(period_0_id = as.character(row_number())) %&gt;%</span>
-<span class="co">#&gt;           dplyr::select(period_0_id, vars_to_bring) %&gt;%</span>
-<span class="co">#&gt;           dplyr::rename_at(dplyr::vars(vars_to_bring), list(~ paste0(., "_period_0"))),</span>
-<span class="co">#&gt;         by = "period_0_id"</span>
+<span class="co">#&gt;         source %&gt;%</span>
+<span class="co">#&gt;           dplyr::mutate(source_id = as.character(row_number())) %&gt;%</span>
+<span class="co">#&gt;           dplyr::select(source_id, vars_to_bring) %&gt;%</span>
+<span class="co">#&gt;           dplyr::rename_at(dplyr::vars(vars_to_bring), list(~ paste0(., "_source"))),</span>
+<span class="co">#&gt;         by = "source_id"</span>
 <span class="co">#&gt;       )</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;     period_1_matches &lt;-</span>
-<span class="co">#&gt;       period_1 %&gt;%</span>
+<span class="co">#&gt;     target_matches &lt;-</span>
+<span class="co">#&gt;       target %&gt;%</span>
 <span class="co">#&gt;       dplyr::mutate(</span>
-<span class="co">#&gt;         period_1_id = as.character(row_number()),</span>
+<span class="co">#&gt;         target_id = as.character(row_number()),</span>
 <span class="co">#&gt;         .imp = 0L</span>
 <span class="co">#&gt;       ) %&gt;%</span>
 <span class="co">#&gt;       dplyr::bind_rows(</span>
@@ -768,23 +742,23 @@ imputation <span class="op">%&gt;%</span><span class="st"> </span><span class="k
 <span class="co">#&gt;           (.) %&gt;%</span>
 <span class="co">#&gt;             dplyr::select(-.imp),</span>
 <span class="co">#&gt;           all_matches,</span>
-<span class="co">#&gt;           by = "period_1_id"</span>
+<span class="co">#&gt;           by = "target_id"</span>
 <span class="co">#&gt;         )</span>
 <span class="co">#&gt;       ) %&gt;%</span>
-<span class="co">#&gt;       dplyr::rename(.id = period_1_id) %&gt;%</span>
+<span class="co">#&gt;       dplyr::rename(.id = target_id) %&gt;%</span>
 <span class="co">#&gt;       dplyr::select(.imp, .id, tidyselect::everything())</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     if (reduced) {</span>
-<span class="co">#&gt;       return(period_1_matches)</span>
+<span class="co">#&gt;       return(target_matches)</span>
 <span class="co">#&gt;     } else {</span>
 <span class="co">#&gt;       list(</span>
 <span class="co">#&gt;         all_boots = all_boots,</span>
-<span class="co">#&gt;         period_1_matches = period_1_matches</span>
+<span class="co">#&gt;         target_matches = target_matches</span>
 <span class="co">#&gt;       ) %&gt;%</span>
 <span class="co">#&gt;         return()</span>
 <span class="co">#&gt;     }</span>
 <span class="co">#&gt;   }</span>
-<span class="co">#&gt; &lt;bytecode: 0x000000001edcdde8&gt;</span>
+<span class="co">#&gt; &lt;bytecode: 0x000000001a003fb0&gt;</span>
 <span class="co">#&gt; &lt;environment: namespace:syntheticpanel&gt;</span></code></pre></div>
 </div>
   </div>

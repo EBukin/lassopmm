@@ -86,7 +86,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/how_it_works.html">how_it_works</a>
+      <a href="../articles/how_it_works.html">How it works in steps</a>
+    </li>
+    <li>
+      <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
     </li>
   </ul>
 </li>
@@ -117,7 +123,7 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>get_bootstrap_permutation</span>(<span class='no'>data</span>, <span class='no'>n_rep</span>)</pre>
+    <pre class="usage"><span class='fu'>get_bootstrap_permutation</span>(<span class='no'>data</span>, <span class='no'>n_boot</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -127,8 +133,11 @@
       <td><p>dataframe containing two columns <code>group</code> and <code>id</code>.</p></td>
     </tr>
     <tr>
-      <th>n_rep</th>
-      <td><p>number of resamplings</p></td>
+      <th>n_boot</th>
+      <td><p>number of bootstrap permulations (resamplings).
+If <code>n_rep = 0</code>, no bootstraping is performed and we have the
+bootstrap sample, whcih consist of the same observations in the same
+order as source data.</p></td>
     </tr>
     </table>
     

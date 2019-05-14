@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Sub-sample of the automobiles data from STATA. — p_1_exmple • syntheticpanel</title>
+<title>Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic. — find_source_for_target • syntheticpanel</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Sub-sample of the automobiles data from STATA. — p_1_exmple" />
+<meta property="og:title" content="Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic. — find_source_for_target" />
 
-<meta property="og:description" content="Sub-sample of the automobiles data from STATA." />
+<meta property="og:description" content="Impute data to from the period 0 dataframe to the period 1 using &quot;lassopmm&quot; logic." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -112,37 +112,94 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Sub-sample of the automobiles data from STATA.</h1>
+    <h1>Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic.</h1>
     
-    <div class="hidden name"><code>p_1_exmple.Rd</code></div>
+    <div class="hidden name"><code>find_source_for_target.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Sub-sample of the automobiles data from STATA.</p>
+    <p>Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic.</p>
     
     </div>
 
-    <pre class="usage"><span class='no'>p_1_exmple</span></pre>
-        
-    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
-
-    <p>A data frame with 7 rows and 16 variables</p>
+    <pre class="usage"><span class='fu'>find_source_for_target</span>(<span class='no'>source</span>, <span class='no'>target</span>, <span class='no'>dep_var</span>, <span class='no'>indep_var</span>,
+  <span class='kw'>weight_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>extra_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>n_boot</span> <span class='kw'>=</span> <span class='fl'>5</span>,
+  <span class='kw'>group_boot_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>force_boot</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>force_lambda</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>n_folds</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
-    <h2 class="hasAnchor" id="source"><a class="anchor" href="#source"></a>Source</h2>
-
-    <p><a href='http://www.stata-press.com/data/r15/auto.dta'>http://www.stata-press.com/data/r15/auto.dta</a></p>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>source, target</th>
+      <td><p>dataframes with the period 0 and period 1 data
+respectively. These dataframes have to contain same columns with the
+identical names and variable types. If this is violated, errors may
+appear in the process of running the function.</p></td>
+    </tr>
+    <tr>
+      <th>dep_var</th>
+      <td><p>character vector with one name of the dependent variable.</p></td>
+    </tr>
+    <tr>
+      <th>indep_var</th>
+      <td><p>character vector with the names of independent variables.</p></td>
+    </tr>
+    <tr>
+      <th>weight_var</th>
+      <td><p>character vector with one name of the weight variable.
+Default is `NULL`, when `NULL` equall weights of 1 for each obesrcation
+are assumed.</p></td>
+    </tr>
+    <tr>
+      <th>extra_var, group_boot_var</th>
+      <td><p>character vectors. Could be <code>NULL</code>, contain
+one element or a vector of multiple lements. <code>extra_var</code> represents
+names of the variable, which should be joint from the <code>source</code> data to
+the <code>target</code> data based on the match by the dependent variable <code>dep_var</code>.</p></td>
+    </tr>
+    <tr>
+      <th>n_near</th>
+      <td><p>number of the nearest observations to derive a random match.
+If `n_near` is greater than `length(match_vector)`, minimum out of two is
+used to create a sample for selecting a random match value.</p></td>
+    </tr>
+    <tr>
+      <th>n_boot</th>
+      <td><p>number of bootstrap permulations (resamplings).
+If <code>n_rep = 0</code>, no bootstraping is performed and we have the
+bootstrap sample, whcih consist of the same observations in the same
+order as source data.</p></td>
+    </tr>
+    <tr>
+      <th>force_boot</th>
+      <td><p>bootstrapping permutation vector externally defined. Default
+is <code>NULL</code>. Has to be provided a dataframe, where each column represent
+indexes of the resampled observations for each bootsrtap iteration.</p></td>
+    </tr>
+    <tr>
+      <th>force_lambda</th>
+      <td><p>allows to specify one lamda value. Shoul be 0, when we
+want to switch to the linear regression.</p></td>
+    </tr>
+    <tr>
+      <th>n_folds</th>
+      <td><p>number of folds for cross-validation</p></td>
+    </tr>
+    <tr>
+      <th>reduced</th>
+      <td><p>if TRUE terurns reduced outpur without specific regression details.</p></td>
+    </tr>
+    </table>
     
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      
-      <li><a href="#format">Format</a></li>
-
-      <li><a href="#source">Source</a></li>
-          </ul>
+      <li><a href="#arguments">Arguments</a></li>
+                </ul>
 
   </div>
 </div>

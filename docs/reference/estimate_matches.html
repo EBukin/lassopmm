@@ -86,7 +86,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/how_it_works.html">how_it_works</a>
+      <a href="../articles/how_it_works.html">How it works in steps</a>
+    </li>
+    <li>
+      <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
     </li>
   </ul>
 </li>
@@ -117,18 +123,18 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>estimate_matches</span>(<span class='no'>x_mat</span>, <span class='no'>y_mat</span>, <span class='no'>w_mat</span>, <span class='no'>x1_mat</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>n_folds</span> <span class='kw'>=</span> <span class='fl'>10</span>)</pre>
+    <pre class="usage"><span class='fu'>estimate_matches</span>(<span class='no'>source_x_mat</span>, <span class='no'>source_y_mat</span>, <span class='no'>source_w_mat</span>, <span class='no'>target_x_mat</span>,
+  <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>n_folds</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>force_lambda</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x_mat, y_mat, w_mat</th>
+      <th>source_x_mat, source_y_mat, source_w_mat</th>
       <td><p>matrixes of independent, dependent variables and weights</p></td>
     </tr>
     <tr>
-      <th>x1_mat</th>
+      <th>target_x_mat</th>
       <td><p>matrixes of independent variables for the prediction sample</p></td>
     </tr>
     <tr>
@@ -138,12 +144,17 @@ If `n_near` is greater than `length(match_vector)`, minimum out of two is
 used to create a sample for selecting a random match value.</p></td>
     </tr>
     <tr>
-      <th>reduced</th>
-      <td><p>if TRUE terurns reduced outpur without specific regression details.</p></td>
-    </tr>
-    <tr>
       <th>n_folds</th>
       <td><p>number of folds for cross-validation</p></td>
+    </tr>
+    <tr>
+      <th>force_lambda</th>
+      <td><p>allows to specify one lamda value. Shoul be 0, when we
+want to switch to the linear regression.</p></td>
+    </tr>
+    <tr>
+      <th>reduced</th>
+      <td><p>if TRUE terurns reduced outpur without specific regression details.</p></td>
     </tr>
     </table>
     
@@ -152,20 +163,20 @@ used to create a sample for selecting a random match value.</p></td>
     <p>In both <code>reduced=TRUE</code> and <code>reduced=FALSE</code> forms, the function returns
     a list with elements. In the form <code>reduced=TRUE</code> only results of matching
     are returned:</p><ul>
-<li><p><code>y0_hat</code> is the vecrtor of predicted values based on the result of
+<li><p><code>source_y_hat</code> is the vecrtor of predicted values based on the result of
             the lasso regression with <code>nfolds</code> cross validation and "mse"
-            measure for identifying minimizing value of lambda. It uses <code>x_mat</code>,
-            <code>y_mat</code>, and <code>w_mat</code> for running regression and predictind <code>y0_hat</code>.</p></li>
-<li><p><code>y1_hat</code> is the vetor of predicted values produced using the
-            <code>y0_hat</code> regression results and <code>x1_mat</code> independent variables matrix.</p></li>
-<li><p><code>match</code> is the dataframe with: columns <code>period_1_id</code> - index of each
-             <code>y1_hat</code> value; column <code>y1_hat</code> - its' value; column <code>period_0_id</code> -
-             position of the nearest match from the <code>y0_hat</code> vector and
-             column <code>y0_hat</code> - value of the nearest match</p></li>
+            measure for identifying minimizing value of lambda. It uses <code>source_x_mat</code>,
+            <code>source_y_mat</code>, and <code>source_w_mat</code> for running regression and predictind <code>source_y_hat</code>.</p></li>
+<li><p><code>target_y_hat</code> is the vetor of predicted values produced using the
+            <code>source_y_hat</code> regression results and <code>target_x_mat</code> independent variables matrix.</p></li>
+<li><p><code>match</code> is the dataframe with: columns <code>target_id</code> - index of each
+             <code>target_y_hat</code> value; column <code>target_y_hat</code> - its' value; column <code>source_id</code> -
+             position of the nearest match from the <code>source_y_hat</code> vector and
+             column <code>source_y_hat</code> - value of the nearest match</p></li>
 </ul>
 
 <p>In the not reduced form the list contains more elements:</p><ul>
-<li><p>items <code>x_mat</code>, <code>y_mat</code>, <code>w_mat</code> and <code>x1_mat</code> from the inputs to the
+<li><p>items <code>source_x_mat</code>, <code>source_y_mat</code>, <code>source_w_mat</code> and <code>target_x_mat</code> from the inputs to the
             functions.</p></li>
 <li><p><code>lambda_cv</code> - result of the <code><a href='https://www.rdocumentation.org/packages/glmnet/topics/cv.glmnet'>cv.glmnet</a></code>.</p></li>
 <li><p><code>fit</code>  - result of the <code><a href='https://www.rdocumentation.org/packages/glmnet/topics/glmnet'>glmnet</a></code></p></li>
@@ -192,7 +203,7 @@ used to create a sample for selecting a random match value.</p></td>
 <span class='no'>XX1</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/matrix'>as.matrix</a></span>(<span class='no'>mtcars</span>[<span class='fl'>1</span>:<span class='fl'>10</span>, !<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/names'>names</a></span>(<span class='no'>mtcars</span>) <span class='kw'>%in%</span> <span class='st'>"hp"</span>])
 
 <span class='co'># Running simple estimation and returning</span>
-<span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'>estimate_matches</span>(<span class='kw'>x_mat</span> <span class='kw'>=</span> <span class='no'>XX</span>, <span class='kw'>y_mat</span> <span class='kw'>=</span> <span class='no'>YY</span>, <span class='kw'>w_mat</span> <span class='kw'>=</span> <span class='no'>WW</span>, <span class='kw'>x1_mat</span> <span class='kw'>=</span> <span class='no'>XX1</span>, <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>5</span>)
+<span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'>estimate_matches</span>(<span class='kw'>source_x_mat</span> <span class='kw'>=</span> <span class='no'>XX</span>, <span class='kw'>source_y_mat</span> <span class='kw'>=</span> <span class='no'>YY</span>, <span class='kw'>source_w_mat</span> <span class='kw'>=</span> <span class='no'>WW</span>, <span class='kw'>target_x_mat</span> <span class='kw'>=</span> <span class='no'>XX1</span>, <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>5</span>)
 
 <span class='co'># Extract regression coefficients</span>
 <span class='no'>a</span>$<span class='no'>fit</span> <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/coef'>coef</a></span>()</div><div class='output co'>#&gt; 11 x 1 sparse Matrix of class "dgCMatrix"
@@ -208,21 +219,21 @@ used to create a sample for selecting a random match value.</p></td>
 #&gt; am            .        
 #&gt; gear          .        
 #&gt; carb         15.0334872</div><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/utils/topics/str'>str</a></span>(<span class='no'>a</span>, <span class='kw'>max.level</span> <span class='kw'>=</span> <span class='fl'>1</span>)</div><div class='output co'>#&gt; List of 9
-#&gt;  $ x_mat    : num [1:32, 1:10] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...
+#&gt;  $ source_x_mat: num [1:32, 1:10] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
-#&gt;  $ w_mat    : num [1:32, 1] 1 1 1 1 1 1 1 1 1 1 ...
-#&gt;  $ y_mat    : num [1:32, 1] 110 110 93 110 175 105 245 62 95 123 ...
-#&gt;  $ x1_mat   : num [1:10, 1:10] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...
+#&gt;  $ source_w_mat: num [1:32, 1] 1 1 1 1 1 1 1 1 1 1 ...
+#&gt;  $ source_y_mat: num [1:32, 1] 110 110 93 110 175 105 245 62 95 123 ...
+#&gt;  $ target_x_mat: num [1:10, 1:10] 21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
-#&gt;  $ lambda_cv:List of 10
+#&gt;  $ lambda_cv   :List of 10
 #&gt;   ..- attr(*, "class")= chr "cv.glmnet"
-#&gt;  $ fit      :List of 12
+#&gt;  $ fit         :List of 12
 #&gt;   ..- attr(*, "class")= chr [1:2] "elnet" "glmnet"
-#&gt;  $ y0_hat   : Named num [1:32] 156.4 152.7 77.6 114.5 176.8 ...
+#&gt;  $ source_y_hat: Named num [1:32] 156.4 152.7 77.6 114.5 176.8 ...
 #&gt;   ..- attr(*, "names")= chr [1:32] "Mazda RX4" "Mazda RX4 Wag" "Datsun 710" "Hornet 4 Drive" ...
-#&gt;  $ y1_hat   : Named num [1:10] 156.4 152.7 77.6 114.5 176.8 ...
+#&gt;  $ target_y_hat: Named num [1:10] 156.4 152.7 77.6 114.5 176.8 ...
 #&gt;   ..- attr(*, "names")= chr [1:10] "Mazda RX4" "Mazda RX4 Wag" "Datsun 710" "Hornet 4 Drive" ...
-#&gt;  $ match    :Classes 'tbl_df', 'tbl' and 'data.frame':	10 obs. of  4 variables:</div><div class='input'>
+#&gt;  $ match       :Classes 'tbl_df', 'tbl' and 'data.frame':	10 obs. of  4 variables:</div><div class='input'>
 <span class='co'># Developing a sample bootsrtap vector</span>
 <span class='no'>perm_example</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>purrr</span><span class='kw ns'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='fl'>1</span>:<span class='fl'>5</span>, ~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/sample.html'>sample</a></span>(<span class='fl'>1</span>:<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>YY</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>YY</span>), <span class='fl'>TRUE</span>))
 
@@ -230,10 +241,10 @@ used to create a sample for selecting a random match value.</p></td>
 <span class='no'>a_boot</span> <span class='kw'>&lt;-</span>
   <span class='no'>perm_example</span> <span class='kw'>%&gt;%</span>
   <span class='kw pkg'>purrr</span><span class='kw ns'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='kw pkg'>syntheticpanel</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/syntheticpanel/topics/estimate_matches'>estimate_matches</a></span>(
-    <span class='kw'>x_mat</span> <span class='kw'>=</span> <span class='no'>XX</span>[<span class='no'>.x</span>, ],
-    <span class='kw'>y_mat</span> <span class='kw'>=</span> <span class='no'>YY</span>[<span class='no'>.x</span>, ],
-    <span class='kw'>w_mat</span> <span class='kw'>=</span> <span class='no'>WW</span>[<span class='no'>.x</span>, ],
-    <span class='kw'>x1_mat</span> <span class='kw'>=</span> <span class='no'>XX1</span>,
+    <span class='kw'>source_x_mat</span> <span class='kw'>=</span> <span class='no'>XX</span>[<span class='no'>.x</span>, ],
+    <span class='kw'>source_y_mat</span> <span class='kw'>=</span> <span class='no'>YY</span>[<span class='no'>.x</span>, ],
+    <span class='kw'>source_w_mat</span> <span class='kw'>=</span> <span class='no'>WW</span>[<span class='no'>.x</span>, ],
+    <span class='kw'>target_x_mat</span> <span class='kw'>=</span> <span class='no'>XX1</span>,
     <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
     <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>5</span>
   ))
@@ -248,7 +259,7 @@ used to create a sample for selecting a random match value.</p></td>
 #&gt;  $ :List of 9</div><div class='input'>
 <span class='co'># Accesssing fit of a specific bootstrap iteration</span>
 <span class='no'>a_boot</span><span class='kw'>[[</span><span class='fl'>3</span>]]$<span class='no'>fit</span></div><div class='output co'>#&gt; 
-#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) 
+#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) 
 #&gt; 
 #&gt;      Df   %Dev Lambda
 #&gt; [1,]  4 0.8792  3.662</div><div class='input'>
@@ -256,35 +267,35 @@ used to create a sample for selecting a random match value.</p></td>
 <span class='no'>a_boot</span> <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='st'>"fit"</span>)</div><div class='output co'>#&gt; [[1]]
 #&gt; 
-#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) 
+#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) 
 #&gt; 
 #&gt;      Df   %Dev Lambda
 #&gt; [1,]  4 0.9052  4.007
 #&gt; 
 #&gt; [[2]]
 #&gt; 
-#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) 
+#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) 
 #&gt; 
 #&gt;      Df  %Dev Lambda
 #&gt; [1,]  6 0.893  1.775
 #&gt; 
 #&gt; [[3]]
 #&gt; 
-#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) 
+#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) 
 #&gt; 
 #&gt;      Df   %Dev Lambda
 #&gt; [1,]  4 0.8792  3.662
 #&gt; 
 #&gt; [[4]]
 #&gt; 
-#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) 
+#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) 
 #&gt; 
 #&gt;      Df   %Dev Lambda
 #&gt; [1,]  5 0.8921  3.755
 #&gt; 
 #&gt; [[5]]
 #&gt; 
-#&gt; Call:  glmnet::glmnet(x = x_mat, y = y_mat, weights = w_mat, alpha = 1,      lambda = lambda_cv$lambda.min) 
+#&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) 
 #&gt; 
 #&gt;      Df   %Dev Lambda
 #&gt; [1,]  7 0.9581 0.9094
