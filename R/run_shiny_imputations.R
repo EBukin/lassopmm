@@ -14,7 +14,7 @@ run_shiny_imputations <- function(app_name = "shiny_imputations") {
   if (missing(app_name) || !nzchar(app_name) ||
     !app_name %in% valid_app_names) {
     stop(
-      "Please run `run_shiny_app_name()` with a valid app_name app as an argument.\n",
+      "Please run `run_shiny_imputations()` with a valid app_name app as an argument.\n",
       valid_app_names_message,
       call. = FALSE
     )

@@ -23,10 +23,10 @@ Using R for the same kind of analysis on the same data.
 ```{r}
 suppressMessages(library(dplyr))
 suppressMessages(library(tidyr))
-library(haven)
+suppressMessages(library(haven))
 suppressMessages(library(mice))
 
-stata_pool_data <- read_dta("base_pmm_example.dta")
+stata_pool_data <- read_dta("base_pmm_example.dta") %>% zap_labels()
 ```
 
 Now we clean the data to the `mice` like data structure, where we have `.id` and `.imp` variables and the imputed data itself. 
@@ -92,3 +92,4 @@ Within VCE type:     Analytic             max     =       4.12
        price |   6711.486    1521.65      2535.511    10887.46
 --------------------------------------------------------------
 ```
+

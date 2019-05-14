@@ -5,10 +5,10 @@
 #' @inheritParams find_near
 #' @return It produces a list of four elements:
 #'     \itemize{
-#'       \item `\code{period_1_id} position of the \code{o} (observation element in the named vector)
-#'       \item \code{y1_hat} value of the \code{o}
-#'       \item \code{period_0_id} position of the nearest match in the alternatives vector \code{m}
-#'       \item \code{y0_hat} value of the nearest match.
+#'       \item `\code{target_id} position of the \code{o} (observation element in the named vector)
+#'       \item \code{target_y_hat} value of the \code{o}
+#'       \item \code{source_id} position of the nearest match in the alternatives vector \code{m}
+#'       \item \code{source_y_hat} value of the nearest match.
 #'       }
 #'
 #' @export
@@ -25,10 +25,10 @@ find_one_near <- function(o, m, n_near = 5) {
   near_obs <- names(sort(abs(m - o), na.last = TRUE, decreasing = F))[1:min(n_near, length(m))]
   match <- sample(near_obs, size = 1, replace = FALSE)
   list(
-    period_1_id = names(o),
-    y1_hat = o[[1]],
-    period_0_id = if (null_names_m) NULL else match,
-    y0_hat = m[[match]]
+    target_id = names(o),
+    target_y_hat = o[[1]],
+    source_id = if (null_names_m) NULL else match,
+    source_y_hat = m[[match]]
   )
 }
 
@@ -36,7 +36,7 @@ find_one_near <- function(o, m, n_near = 5) {
 #'
 #' @param observ_vector named vector or value to find a match from `match_vector`.
 #'   If the vector has no names function will still work, but the resulting
-#'   `period_1_id` variable will be empty.
+#'   `target_id` variable will be empty.
 #' @param match_vector named vector which is used to find a nearest match to the
 #'   `observ_vector`.
 #' @param n_near number of the nearest observations to derive a random match.

@@ -58,8 +58,9 @@ bt_groups <- c("psu")     # Grouping variable for bootsrapping.
 n_nearest <- 1    # numebr of the nearest observations to drow a random match
 set.seed(11223344)
 imputation <-
-  impute_data(period_0 = p_0_exmple, 
-              period_1 = p_1_exmple,
+  find_source_for_target(
+              source = p_0_exmple, 
+              target = p_1_exmple,
               dep_var = dep, indep_var = indep, weight_var = weight,
               group_boot_var = bt_groups,
               extra_var = extrar,
@@ -71,10 +72,10 @@ In the basic layout, the function returns us a long-structured data frame, which
 
 There are several new variables added in the `period_1` data frame in the `imputation` form. These are:
 
-*    `y1_hat` - predicted values for each `.id` in the period 1, using id-specific independent variables and lasso regression parameters estimated based on the '.imp'-specific bootstrap sub-sample from the _period 0_. `y0_hat` is the same, but for the period 0.
-*    `period_0_id` - id of the observation from the period 0, which is the nearest match for the `y1_hat` from the `y0_hat` estimated on a separate bootstrapped sub-sample according to the `.imp`.
-*    `price_period_0` - is the depended variable from the period 0 matched to the period 1. 
-*    `displacement_period_0` and any other variable such as `*_period_0` are the variables which we specify to extract from the period 0 using the parameter `extra_var`.
+*    `target_y_hat` - predicted values for each `.id` in the period 1, using id-specific independent variables and lasso regression parameters estimated based on the '.imp'-specific bootstrap sub-sample from the _source_ period. `source_y_hat` is the same, but for the period 0.
+*    `source_id` - id of the observation from the period 0, which is the nearest match for the `target_y_hat` from the `source_y_hat` estimated on a separate bootstrapped sub-sample according to the `.imp`.
+*    `price_source` - is the depended variable from the period 0 matched to the period 1. 
+*    `displacement_source` and any other variable such as `*_source` are the variables which we specify to extract from the period 0 using the parameter `extra_var`.
 
 ```{r}
 glimpse(imputation)
@@ -95,14 +96,14 @@ Similarly to the `mi` environment in stata, we can use here multiple imputation 
 
 First, we need to convert data frame to the `mids` object. Then we used `mice::with()` to apply specific statistics to each single bootstrap iteration. With `mice::pool()` we pool statistics results together. We use `summary()` to extract more user-friendly statistics from the pooled results. 
 
-As straightforward statistics such as `mean()` or `sd()` is slightly more sophisticated with the multiple imputed data, we use linear model to derive mean values of the imputed observations in the variable `price_period_0`. 
+As straightforward statistics such as `mean()` or `sd()` is slightly more sophisticated with the multiple imputed data, we use linear model to derive mean values of the imputed observations in the variable `price_source`. 
 
 
 ```{r}
 library(mice)
 
 mi_test <- as.mids(imputation) # Converting imputated data to the "mids" object
-mean_stats <- with(mi_test, lm(price_period_0 ~ 1))
+mean_stats <- with(mi_test, lm(price_source ~ 1))
 est <- pool(mean_stats) # poolling results 
 summary(est) # returns mean and standard error for pooled multipuly imputed data.
 est          # returns additional data 

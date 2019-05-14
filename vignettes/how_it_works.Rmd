@@ -43,10 +43,17 @@ As an example, let us create a data fame with two columns `id` and `group`. Colu
 
 ```{r}
 sample_vector(1:10)
-df <- tibble::tibble(id = 1:30, group = sort(rep(1:3, 10)))
+df <- tibble::tibble(id = 1:20, group = sort(rep(1:2, 10)))
 glimpse(df)
 get_bootstrap_permutation(df, 3)
 ```
+
+Using 0 as the number of permulation allows us to return dataset identical to the original source data. In such case, bootstrap function simply returns vector with the same index as the input one.
+
+```{r}
+get_bootstrap_permutation(df, 0)
+```
+
 
 ## Step 2. Matching the nearest observation
 
@@ -58,11 +65,10 @@ It happens also in two steps.
 find_one_near
 ```
  
-It works as:
+It works as follows allowing to have named an unnamed vectors supplied into it.
  
 ```{r}
 find_one_near(c("a" = 10), c(8:15), 3)
-find_one_near(c("a" = 10), setNames(c(8:15), letters[1:8]), 5)
 ```
  
 `find_near()` wraps it for matching vector with the vector. 
@@ -92,22 +98,32 @@ XX1 <- as.matrix(mtcars[1:10, !names(mtcars) %in% "hp"])
 Running simple estimation and returning the output is straightforward. We run it in the full - not reduced form to see all the possible outputs of the function.
 
 ```{r}
-a <- estimate_matches(x_mat = XX, y_mat = YY, w_mat = WW, x1_mat = XX1, reduced = FALSE, n_near = 5)
+a <- estimate_matches(source_x_mat = XX, 
+                      source_y_mat = YY, 
+                      source_w_mat = WW, 
+                      target_x_mat = XX1, 
+                      reduced = FALSE, 
+                      n_near = 5)
 str(a, max.level = 1)
+```
+
+to extract coefficients of the fited lasso regression, we use:
+
+```{r}
 a$fit %>% coef()
 ```
 
-Same could be done with the bootstrapping. The only difference is that we have to supply to the function a sub sampled version of data (X, Y and W).
+Same could be done with the bootstrapping. The only difference is that we have to supply to the function a sub sampled version of data (X, Y and W). We can do so using `purrr::map` and split-apply-combine strategy.
 
 ```{r}
-perm_example <- purrr::map(1:5, ~ sample(1:nrow(YY), nrow(YY), TRUE))
+perm_example <- purrr::map(1:3, ~ sample(1:nrow(YY), nrow(YY), TRUE))
 a_boot <-
    perm_example %>%
    purrr::map(~ syntheticpanel::estimate_matches(
-     x_mat = XX[.x, ],
-     y_mat = YY[.x, ],
-     w_mat = WW[.x, ],
-     x1_mat = XX1,
+     source_x_mat = XX[.x, ],
+     source_y_mat = YY[.x, ],
+     source_w_mat = WW[.x, ], 
+     target_x_mat = XX1,
      reduced = FALSE,
      n_near = 5
    ))
@@ -131,8 +147,7 @@ a_boot[[3]]$fit
 *    Doing the same with each single bootstrap iteration
 
 ```{r}
-a_boot %>%
- map("fit")
+a_boot %>% map("fit")
 ```
 
 *    Extracting coefficients from each single bootstrap iteration
@@ -151,8 +166,7 @@ a_boot %>%
  map(broom::tidy) %>%
  map(~ select(.x, term, estimate)) %>%
  map2(.y = 1:length(.), ~ rename_at(.x, vars(estimate), list(~ paste0(., "_", .y)))) %>%
- reduce(full_join)
-
+ reduce(full_join, by = "term")
 ```
 
 The source code of the function looks like:
@@ -182,13 +196,16 @@ bt_groups <- c("psu")     # Grouping variable for bootsrapping.
 n_nearest <- 1    # numebr of the nearest observations to drow a random match
 set.seed(11223344)
 imputation <-
-  impute_data(period_0 = p_0_exmple, 
-              period_1 = p_1_exmple,
-              dep_var = dep, indep_var = indep, weight_var = weight,
-              group_boot_var = bt_groups,
-              extra_var = extrar,
-              n_boot = 5, # Numebr of bootstrap iterations
-              n_near = 1)
+  find_source_for_target(
+    source = p_0_exmple, 
+    target = p_1_exmple,
+    dep_var = dep, 
+    indep_var = indep, 
+    weight_var = weight,
+    group_boot_var = bt_groups,
+    extra_var = extrar,
+    n_boot = 5, # Numebr of bootstrap iterations
+    n_near = 1)
 
 glimpse(imputation)
 
@@ -205,7 +222,7 @@ imputation %>% group_by(.imp) %>% count()
 Source code of the function is:
 
 ```{r}
-impute_data
+find_source_for_target
 ```
 
 

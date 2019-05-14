@@ -1,30 +1,32 @@
 #' Run lasso estimation on the prepared matrixes
 #'
-#' @param x_mat,y_mat,w_mat matrixes of independent, dependent variables and weights
-#' @param x1_mat matrixes of independent variables for the prediction sample
+#' @param source_x_mat,source_y_mat,source_w_mat matrixes of independent, dependent variables and weights
+#' @param target_x_mat matrixes of independent variables for the prediction sample
 #' @param reduced if TRUE terurns reduced outpur without specific regression details.
 #' @param n_folds number of folds for cross-validation
+#' @param force_lambda allows to specify one lamda value. Shoul be 0, when we
+#'          want to switch to the linear regression.
 #' @inheritParams find_near
 #'
 #' @return In both \code{reduced=TRUE} and \code{reduced=FALSE} forms, the function returns
 #'     a list with elements. In the form \code{reduced=TRUE} only results of matching
 #'     are returned:
 #'     \itemize{
-#'       \item \code{y0_hat} is the vecrtor of predicted values based on the result of
+#'       \item \code{source_y_hat} is the vecrtor of predicted values based on the result of
 #'             the lasso regression with \code{nfolds} cross validation and "mse"
-#'             measure for identifying minimizing value of lambda. It uses \code{x_mat},
-#'             \code{y_mat}, and \code{w_mat} for running regression and predictind \code{y0_hat}.
-#'       \item \code{y1_hat} is the vetor of predicted values produced using the
-#'             \code{y0_hat} regression results and \code{x1_mat} independent variables matrix.
-#'       \item \code{match} is the dataframe with: columns \code{period_1_id} - index of each
-#'              \code{y1_hat} value; column \code{y1_hat} - its' value; column \code{period_0_id} -
-#'              position of the nearest match from the \code{y0_hat} vector and
-#'              column \code{y0_hat} - value of the nearest match
+#'             measure for identifying minimizing value of lambda. It uses \code{source_x_mat},
+#'             \code{source_y_mat}, and \code{source_w_mat} for running regression and predictind \code{source_y_hat}.
+#'       \item \code{target_y_hat} is the vetor of predicted values produced using the
+#'             \code{source_y_hat} regression results and \code{target_x_mat} independent variables matrix.
+#'       \item \code{match} is the dataframe with: columns \code{target_id} - index of each
+#'              \code{target_y_hat} value; column \code{target_y_hat} - its' value; column \code{source_id} -
+#'              position of the nearest match from the \code{source_y_hat} vector and
+#'              column \code{source_y_hat} - value of the nearest match
 #'     }
 #'
 #'     In the not reduced form the list contains more elements:
 #'     \itemize{
-#'       \item items \code{x_mat}, \code{y_mat}, \code{w_mat} and \code{x1_mat} from the inputs to the
+#'       \item items \code{source_x_mat}, \code{source_y_mat}, \code{source_w_mat} and \code{target_x_mat} from the inputs to the
 #'             functions.
 #'       \item \code{lambda_cv} - result of the \code{\link[glmnet]{cv.glmnet}}.
 #'       \item \code{fit}  - result of the \code{\link[glmnet]{glmnet}}
@@ -45,7 +47,7 @@
 #' XX1 <- as.matrix(mtcars[1:10, !names(mtcars) %in% "hp"])
 #'
 #' # Running simple estimation and returning
-#' a <- estimate_matches(x_mat = XX, y_mat = YY, w_mat = WW, x1_mat = XX1, reduced = FALSE, n_near = 5)
+#' a <- estimate_matches(source_x_mat = XX, source_y_mat = YY, source_w_mat = WW, target_x_mat = XX1, reduced = FALSE, n_near = 5)
 #'
 #' # Extract regression coefficients
 #' a$fit %>% coef()
@@ -58,10 +60,10 @@
 #' a_boot <-
 #'   perm_example %>%
 #'   purrr::map(~ syntheticpanel::estimate_matches(
-#'     x_mat = XX[.x, ],
-#'     y_mat = YY[.x, ],
-#'     w_mat = WW[.x, ],
-#'     x1_mat = XX1,
+#'     source_x_mat = XX[.x, ],
+#'     source_y_mat = YY[.x, ],
+#'     source_w_mat = WW[.x, ],
+#'     target_x_mat = XX1,
 #'     reduced = FALSE,
 #'     n_near = 5
 #'   ))
@@ -90,56 +92,63 @@
 #'   map2(.y = 1:length(.), ~ rename_at(.x, vars(estimate), list(~ paste0(., "_", .y)))) %>%
 #'   reduce(full_join)
 estimate_matches <-
-  function(x_mat,
-             y_mat,
-             w_mat,
-             x1_mat,
+  function(source_x_mat,
+             source_y_mat,
+             source_w_mat,
+             target_x_mat,
              n_near = 5,
-             reduced = TRUE,
-             n_folds = 10) {
-    lambda_cv <-
-      glmnet::cv.glmnet(
-        x = x_mat,
-        y = y_mat,
-        weights = w_mat,
-        type.measure = "mse",
-        nfolds = n_folds
-      )
+             n_folds = 10,
+             force_lambda = NULL,
+             reduced = TRUE) {
+    if (is.null(force_lambda) || is.na(force_lambda)) {
+      lambda_cv <-
+        glmnet::cv.glmnet(
+          x = source_x_mat,
+          y = source_y_mat,
+          weights = source_w_mat,
+          type.measure = "mse",
+          nfolds = n_folds
+        )
+    } else {
+      lambda_cv <- list()
+      lambda_cv$lambda.min <- force_lambda
+    }
+
     fit <-
       glmnet::glmnet(
-        x = x_mat,
-        y = y_mat,
-        weights = w_mat,
+        x = source_x_mat,
+        y = source_y_mat,
+        weights = source_w_mat,
         alpha = 1,
         lambda = lambda_cv$lambda.min
       )
 
-    y0_hat <- stats::predict(fit, x_mat)[, 1]
-    y1_hat <- stats::predict(fit, x1_mat)[, 1]
+    source_y_hat <- stats::predict(fit, newx = source_x_mat)[, 1]
+    target_y_hat <- stats::predict(fit, newx = target_x_mat)[, 1]
 
     # Check that predict works the right way
-    # t(as.matrix(coef(fit))) %*% t(cbind(rep(1, nrow(x1_mat)), x1_mat))
+    # t(as.matrix(coef(fit))) %*% t(cbind(rep(1, nrow(target_x_mat)), target_x_mat))
 
-    match <- find_near(y1_hat, y0_hat, n_near)
+    match <- find_near(target_y_hat, source_y_hat, n_near)
 
     if (!reduced) {
       return(
         list(
-          x_mat = x_mat,
-          w_mat = w_mat,
-          y_mat = y_mat,
-          x1_mat = x1_mat,
+          source_x_mat = source_x_mat,
+          source_w_mat = source_w_mat,
+          source_y_mat = source_y_mat,
+          target_x_mat = target_x_mat,
           lambda_cv = lambda_cv,
           fit = fit,
-          y0_hat = y0_hat,
-          y1_hat = y1_hat,
+          source_y_hat = source_y_hat,
+          target_y_hat = target_y_hat,
           match = match
         )
       )
     } else {
       return(list(
-        y0_hat = y0_hat,
-        y1_hat = y1_hat,
+        source_y_hat = source_y_hat,
+        target_y_hat = target_y_hat,
         match = match
       ))
     }

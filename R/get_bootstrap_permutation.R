@@ -16,7 +16,10 @@ sample_vector <- function(ids) {
 #' Generates a list of permutation vectors for bootsrapping
 #'
 #' @param data dataframe containing two columns \code{group} and \code{id}.
-#' @param n_rep number of resamplings
+#' @param n_boot number of bootstrap permulations (resamplings).
+#'     If \code{n_rep = 0}, no bootstraping is performed and we have the
+#'     bootstrap sample, whcih consist of the same observations in the same
+#'     order as source data.
 #'
 #' @export
 #'
@@ -29,19 +32,34 @@ sample_vector <- function(ids) {
 #'
 #' df <- tibble::tibble(id = 1:30, group = sort(rep(1:3, 10)))
 #' get_bootstrap_permutation(df, 3)
-get_bootstrap_permutation <- function(data, n_rep) {
+get_bootstrap_permutation <- function(data, n_boot) {
+  if (is_character(n_boot) ||
+    n_boot < 0) {
+    stop("n_boot must be numeric or integer and greater than 0.")
+  }
   data <-
     data %>%
     dplyr::group_by(group) %>%
     tidyr::nest() %>%
     dplyr::pull(data)
 
-  purrr::map(1:n_rep, function(i) {
-    purrr::map(data, function(y) {
-      sample_vector(y[[1]])
+  if (n_boot == 0) {
+    purrr::map(1, function(i) {
+      purrr::map(data, function(y) {
+        y[[1]]
+      }) %>%
+        unlist()
     }) %>%
-      unlist()
-  })
+      return()
+  } else {
+    purrr::map(1:n_boot, function(i) {
+      purrr::map(data, function(y) {
+        sample_vector(y[[1]])
+      }) %>%
+        unlist()
+    }) %>%
+      return()
+  }
 }
 
 #' Converts a table of the values into a list of permutation vectors. (used for development)
