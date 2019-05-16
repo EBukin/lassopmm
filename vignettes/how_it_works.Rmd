@@ -20,7 +20,7 @@ Here we break into the parts how the imputation process is built in this package
 library(dplyr)
 library(purrr)
 library(tidyr)
-library(syntheticpanel)
+library(lassopmm)
 ```
 
 ## Step 1. Bootstrapping
@@ -119,7 +119,7 @@ Same could be done with the bootstrapping. The only difference is that we have t
 perm_example <- purrr::map(1:3, ~ sample(1:nrow(YY), nrow(YY), TRUE))
 a_boot <-
    perm_example %>%
-   purrr::map(~ syntheticpanel::estimate_matches(
+   purrr::map(~ lassopmm::estimate_matches(
      source_x_mat = XX[.x, ],
      source_y_mat = YY[.x, ],
      source_w_mat = WW[.x, ], 
@@ -196,7 +196,7 @@ bt_groups <- c("psu")     # Grouping variable for bootsrapping.
 n_nearest <- 1    # numebr of the nearest observations to drow a random match
 set.seed(11223344)
 imputation <-
-  find_source_for_target(
+  lassopmm(
     source = p_0_exmple, 
     target = p_1_exmple,
     dep_var = dep, 
@@ -222,7 +222,7 @@ imputation %>% group_by(.imp) %>% count()
 Source code of the function is:
 
 ```{r}
-find_source_for_target
+lassopmm
 ```
 
 

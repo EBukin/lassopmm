@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Multiple imputation statistics in STATA and R • syntheticpanel</title>
+<title>Multiple imputation statistics in STATA and R • lassopmm</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
@@ -29,7 +29,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">syntheticpanel</a>
+        <a class="navbar-link" href="../index.html">lassopmm</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
       </span>
     </div>
@@ -88,53 +88,53 @@
     
 <p>Here, we are going to break down some differences between the multiple imputation statics generate in with the <code>mice</code> package in R and Stata libraries <code>mi</code>. To do so, we will use the multiple imputation data generated in STATA with the <code>lassopmm</code> sample code.</p>
 <p>Using R for the same kind of analysis on the same data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr))
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr))
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(haven))
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(mice))
-
-stata_pool_data &lt;-<span class="st"> </span><span class="kw">read_dta</span>(<span class="st">"base_pmm_example.dta"</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">zap_labels</span>()</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr))</a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr))</a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(mice))</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">stata_pool_data &lt;-<span class="st"> </span></a>
+<a class="sourceLine" id="cb2-2" title="2"><span class="st">  </span>haven<span class="op">::</span><span class="kw"><a href="https://haven.tidyverse.org/reference/read_dta.html">read_dta</a></span>(<span class="st">"DTA-FILE-NAME.dta"</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb2-3" title="3"><span class="st">  </span>haven<span class="op">::</span><span class="kw"><a href="https://haven.tidyverse.org/reference/zap_labels.html">zap_labels</a></span>()</a></code></pre></div>
 <p>Now we clean the data to the <code>mice</code> like data structure, where we have <code>.id</code> and <code>.imp</code> variables and the imputed data itself.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">stata_pmm_part &lt;-<span class="st"> </span>
-<span class="st">  </span>stata_pool_data <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>(price)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(mpg, weight, <span class="kw">contains</span>(<span class="st">"price"</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">.id =</span> <span class="kw">row_number</span>()) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">gather</span>(type, price, <span class="dv">3</span><span class="op">:</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(.) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span>{
-    a &lt;-
-<span class="st">      </span>(.) <span class="op">%&gt;%</span>
-<span class="st">      </span><span class="kw">distinct</span>(type) <span class="op">%&gt;%</span>
-<span class="st">      </span><span class="kw">mutate</span>(<span class="dt">.imp =</span> <span class="dv">0</span><span class="op">:</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(.) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))
-    (.) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">left_join</span>(a, <span class="dt">by =</span> <span class="st">"type"</span>)
-  } <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>type) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(.imp, .id, <span class="kw">everything</span>())
-<span class="co">#&gt; Warning: attributes are not identical across measure variables;</span>
-<span class="co">#&gt; they will be dropped</span>
-<span class="kw">glimpse</span>(stata_pmm_part)
-<span class="co">#&gt; Observations: 42</span>
-<span class="co">#&gt; Variables: 5</span>
-<span class="co">#&gt; $ .imp   &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2...</span>
-<span class="co">#&gt; $ .id    &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5...</span>
-<span class="co">#&gt; $ mpg    &lt;dbl&gt; 20, 26, 22, 12, 17, 19, 25, 20, 26, 22, 12, 17, 19, 25,...</span>
-<span class="co">#&gt; $ weight &lt;dbl&gt; 3250, 2230, 3220, 4720, 3740, 3200, 1990, 3250, 2230, 3...</span>
-<span class="co">#&gt; $ price  &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 4589, 3798, 6850, 15906, 52...</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">stata_pmm_part &lt;-<span class="st"> </span></a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="st">  </span>stata_pool_data <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-3" title="3"><span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>(price)) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-4" title="4"><span class="st">  </span><span class="kw">select</span>(mpg, weight, <span class="kw">contains</span>(<span class="st">"price"</span>)) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-5" title="5"><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">.id =</span> <span class="kw">row_number</span>()) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-6" title="6"><span class="st">  </span><span class="kw">gather</span>(type, price, <span class="dv">3</span><span class="op">:</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(.) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>)) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-7" title="7"><span class="st">  </span>{</a>
+<a class="sourceLine" id="cb3-8" title="8">    a &lt;-</a>
+<a class="sourceLine" id="cb3-9" title="9"><span class="st">      </span>(.) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-10" title="10"><span class="st">      </span><span class="kw">distinct</span>(type) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-11" title="11"><span class="st">      </span><span class="kw">mutate</span>(<span class="dt">.imp =</span> <span class="dv">0</span><span class="op">:</span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(.) <span class="op">-</span><span class="st"> </span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb3-12" title="12">    (.) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">left_join</span>(a, <span class="dt">by =</span> <span class="st">"type"</span>)</a>
+<a class="sourceLine" id="cb3-13" title="13">  } <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-14" title="14"><span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>type) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb3-15" title="15"><span class="st">  </span><span class="kw">select</span>(.imp, .id, <span class="kw">everything</span>())</a>
+<a class="sourceLine" id="cb3-16" title="16"><span class="co">#&gt; Warning: attributes are not identical across measure variables;</span></a>
+<a class="sourceLine" id="cb3-17" title="17"><span class="co">#&gt; they will be dropped</span></a>
+<a class="sourceLine" id="cb3-18" title="18"><span class="kw">glimpse</span>(stata_pmm_part)</a>
+<a class="sourceLine" id="cb3-19" title="19"><span class="co">#&gt; Observations: 42</span></a>
+<a class="sourceLine" id="cb3-20" title="20"><span class="co">#&gt; Variables: 5</span></a>
+<a class="sourceLine" id="cb3-21" title="21"><span class="co">#&gt; $ .imp   &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2...</span></a>
+<a class="sourceLine" id="cb3-22" title="22"><span class="co">#&gt; $ .id    &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5...</span></a>
+<a class="sourceLine" id="cb3-23" title="23"><span class="co">#&gt; $ mpg    &lt;dbl&gt; 20, 26, 22, 12, 17, 19, 25, 20, 26, 22, 12, 17, 19, 25,...</span></a>
+<a class="sourceLine" id="cb3-24" title="24"><span class="co">#&gt; $ weight &lt;dbl&gt; 3250, 2230, 3220, 4720, 3740, 3200, 1990, 3250, 2230, 3...</span></a>
+<a class="sourceLine" id="cb3-25" title="25"><span class="co">#&gt; $ price  &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 4589, 3798, 6850, 15906, 52...</span></a></code></pre></div>
 <p>Finally, we convert this data to the <code>mice</code> form and run basic analysis of the means and standard deviations. To estimate mean of the multiple imputation data in R using mice package, we need to use regression methods. We basically regress our variable of interest with one intercept only and summaries the statistics on the pooled multiple imputation data set. For more information about that wee the book <a href="https://stefvanbuuren.name/fimd/">Flexible Imputation of Missing Data</a> and specifically <a href="https://stefvanbuuren.name/fimd/sec-whyandwhen.html">chapter 2.3</a> and <a href="https://stefvanbuuren.name/fimd/sec-inference.html">chapter 2.4</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">stt &lt;-<span class="st"> </span><span class="kw">as.mids</span>(stata_pmm_part)
-fit &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/with">with</a></span>(stt, <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/lm">lm</a></span>(price <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">weights =</span> weight))
-est &lt;-<span class="st"> </span><span class="kw">pool</span>(fit)
-est    <span class="co"># Getting pool results</span>
-<span class="co">#&gt; Class: mipo    m = 5 </span>
-<span class="co">#&gt;             estimate    ubar        b       t dfcom       df       riv</span>
-<span class="co">#&gt; (Intercept) 6711.486 2069212 205172.6 2315419     6 4.121852 0.1189859</span>
-<span class="co">#&gt;                lambda       fmi</span>
-<span class="co">#&gt; (Intercept) 0.1063337 0.3572983</span>
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(est, <span class="dt">conf.int =</span> <span class="ot">TRUE</span>) <span class="co"># Getting pooled LM summary</span>
-<span class="co">#&gt;             estimate std.error statistic       df    p.value    2.5 %</span>
-<span class="co">#&gt; (Intercept) 6711.486   1521.65  4.410663 4.121852 0.01083776 2535.511</span>
-<span class="co">#&gt;               97.5 %</span>
-<span class="co">#&gt; (Intercept) 10887.46</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">stt &lt;-<span class="st"> </span><span class="kw">as.mids</span>(stata_pmm_part)</a>
+<a class="sourceLine" id="cb4-2" title="2">fit &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/with">with</a></span>(stt, <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/lm">lm</a></span>(price <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">weights =</span> weight))</a>
+<a class="sourceLine" id="cb4-3" title="3">est &lt;-<span class="st"> </span><span class="kw">pool</span>(fit)</a>
+<a class="sourceLine" id="cb4-4" title="4">est    <span class="co"># Getting pool results</span></a>
+<a class="sourceLine" id="cb4-5" title="5"><span class="co">#&gt; Class: mipo    m = 5 </span></a>
+<a class="sourceLine" id="cb4-6" title="6"><span class="co">#&gt;             estimate    ubar        b       t dfcom       df       riv</span></a>
+<a class="sourceLine" id="cb4-7" title="7"><span class="co">#&gt; (Intercept) 6711.486 2069212 205172.6 2315419     6 4.121852 0.1189859</span></a>
+<a class="sourceLine" id="cb4-8" title="8"><span class="co">#&gt;                lambda       fmi</span></a>
+<a class="sourceLine" id="cb4-9" title="9"><span class="co">#&gt; (Intercept) 0.1063337 0.3572983</span></a>
+<a class="sourceLine" id="cb4-10" title="10"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(est, <span class="dt">conf.int =</span> <span class="ot">TRUE</span>) <span class="co"># Getting pooled LM summary</span></a>
+<a class="sourceLine" id="cb4-11" title="11"><span class="co">#&gt;             estimate std.error statistic       df    p.value    2.5 %</span></a>
+<a class="sourceLine" id="cb4-12" title="12"><span class="co">#&gt; (Intercept) 6711.486   1521.65  4.410663 4.121852 0.01083776 2535.511</span></a>
+<a class="sourceLine" id="cb4-13" title="13"><span class="co">#&gt;               97.5 %</span></a>
+<a class="sourceLine" id="cb4-14" title="14"><span class="co">#&gt; (Intercept) 10887.46</span></a></code></pre></div>
 <p>The R results are identical to the Stata!</p>
 <ul>
 <li>

@@ -16,7 +16,7 @@ Same length vector with the resampled values.
 Resample a vector of values with repetition
 }
 \examples{
-library(syntheticpanel)
+library(lassopmm)
 
 sample_vector(1:10)
 }

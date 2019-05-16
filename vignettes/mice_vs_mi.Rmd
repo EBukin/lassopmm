@@ -23,10 +23,17 @@ Using R for the same kind of analysis on the same data.
 ```{r}
 suppressMessages(library(dplyr))
 suppressMessages(library(tidyr))
-suppressMessages(library(haven))
 suppressMessages(library(mice))
-
-stata_pool_data <- read_dta("base_pmm_example.dta") %>% zap_labels()
+```
+```{r eval=FALSE}
+stata_pool_data <- 
+  haven::read_dta("DTA-FILE-NAME.dta") %>% 
+  haven::zap_labels()
+```
+```{r echo=FALSE}
+stata_pool_data <-
+  haven::read_dta( "F:\\Drive\\WB\\leonardo\\learning\\lassopmm_support\\base_pmm_example.dta") %>% 
+  haven::zap_labels()
 ```
 
 Now we clean the data to the `mice` like data structure, where we have `.id` and `.imp` variables and the imputed data itself. 

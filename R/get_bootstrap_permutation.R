@@ -6,7 +6,7 @@
 #' @export
 #'
 #' @examples
-#' library(syntheticpanel)
+#' library(lassopmm)
 #'
 #' sample_vector(1:10)
 sample_vector <- function(ids) {
@@ -28,7 +28,7 @@ sample_vector <- function(ids) {
 #' library(purrr)
 #' library(tidyr)
 #' library(glmnet)
-#' library(syntheticpanel)
+#' library(lassopmm)
 #'
 #' df <- tibble::tibble(id = 1:30, group = sort(rep(1:3, 10)))
 #' get_bootstrap_permutation(df, 3)

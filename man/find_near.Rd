@@ -30,7 +30,7 @@ Find neares match between a vector of observations and a vector of alternatives
 library(dplyr)
 library(purrr)
 library(glmnet)
-library(syntheticpanel)
+library(lassopmm)
 
 obs <- setNames(rnorm(5), as.character(1:5))
 match_v <- setNames(rnorm(50), as.character(1:50))

@@ -15,22 +15,22 @@ knitr::opts_chunk$set(
 ```
 
 
-# syntheticpanel
+# lassopmm
 
 <!-- badges: start -->
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 <!-- badges: end -->
 
 
-The goal of syntheticpanel is to replicate functionality of the STATA program "lassopmm".
+The goal of lassopmm is to replicate functionality of the STATA program "lassopmm".
 
 ## Installation
 
-You can install development version from [GitHub](https://github.com/EBukin/syntheticpanel) with:
+You can install development version from [GitHub](https://github.com/EBukin/lassopmm) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("EBukin/syntheticpanel")
+devtools::install_github("EBukin/lassopmm")
 ```
 
 ## Example of the basic use
@@ -40,7 +40,7 @@ To show how this package work, we will use same example used in the 'lassopmm' p
 ```{r example}
 library(dplyr)
 library(purrr)
-library(syntheticpanel)
+library(lassopmm)
 
 glimpse(p_0_exmple)       # help(p_0_exmple)
 glimpse(p_1_exmple)       # help(p_1_exmple)
@@ -58,7 +58,7 @@ bt_groups <- c("psu")     # Grouping variable for bootsrapping.
 n_nearest <- 1    # numebr of the nearest observations to drow a random match
 set.seed(11223344)
 imputation <-
-  find_source_for_target(
+  lassopmm(
               source = p_0_exmple, 
               target = p_1_exmple,
               dep_var = dep, indep_var = indep, weight_var = weight,

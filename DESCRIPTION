@@ -1,4 +1,4 @@
-Package: syntheticpanel
+Package: lassopmm
 Title: Create synthetic panels from cross sectional data
 Version: 0.0.0.9000
 Authors@R: c(
@@ -33,6 +33,7 @@ Imports:
     tidyselect
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    mice
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1

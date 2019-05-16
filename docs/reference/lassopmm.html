@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Internal function to help in matching observations. — find_one_near • lassopmm</title>
+<title>Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic. — lassopmm • lassopmm</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Internal function to help in matching observations. — find_one_near" />
+<meta property="og:title" content="Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic. — lassopmm" />
 
-<meta property="og:description" content="Internal function to help in matching observations." />
+<meta property="og:description" content="The package provides" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -112,29 +112,52 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Internal function to help in matching observations.</h1>
+    <h1>Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic.</h1>
     
-    <div class="hidden name"><code>find_one_near.Rd</code></div>
+    <div class="hidden name"><code>lassopmm.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Internal function to help in matching observations.</p>
+    <p>The package provides</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>find_one_near</span>(<span class='no'>o</span>, <span class='no'>m</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>5</span>)</pre>
+    <pre class="usage"><span class='fu'>lassopmm</span>(<span class='no'>source</span>, <span class='no'>target</span>, <span class='no'>dep_var</span>, <span class='no'>indep_var</span>, <span class='kw'>weight_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>extra_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>n_boot</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>group_boot_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>force_boot</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>force_lambda</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>n_folds</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>o</th>
-      <td><p>is a value to match</p></td>
+      <th>source, target</th>
+      <td><p>dataframes with the period 0 and period 1 data
+respectively. These dataframes have to contain same columns with the
+identical names and variable types. If this is violated, errors may
+appear in the process of running the function.</p></td>
     </tr>
     <tr>
-      <th>m</th>
-      <td><p>is a named vector which is used to find a nearest match to the <code>o</code></p></td>
+      <th>dep_var</th>
+      <td><p>character vector with one name of the dependent variable.</p></td>
+    </tr>
+    <tr>
+      <th>indep_var</th>
+      <td><p>character vector with the names of independent variables.</p></td>
+    </tr>
+    <tr>
+      <th>weight_var</th>
+      <td><p>character vector with one name of the weight variable.
+Default is `NULL`, when `NULL` equall weights of 1 for each obesrcation
+are assumed.</p></td>
+    </tr>
+    <tr>
+      <th>extra_var, group_boot_var</th>
+      <td><p>character vectors. Could be <code>NULL</code>, contain
+one element or a vector of multiple lements. <code>extra_var</code> represents
+names of the variable, which should be joint from the <code>source</code> data to
+the <code>target</code> data based on the match by the dependent variable <code>dep_var</code>.</p></td>
     </tr>
     <tr>
       <th>n_near</th>
@@ -142,76 +165,47 @@
 If `n_near` is greater than `length(match_vector)`, minimum out of two is
 used to create a sample for selecting a random match value.</p></td>
     </tr>
+    <tr>
+      <th>n_boot</th>
+      <td><p>number of bootstrap permulations (resamplings).
+If <code>n_rep = 0</code>, no bootstraping is performed and we have the
+bootstrap sample, whcih consist of the same observations in the same
+order as source data.</p></td>
+    </tr>
+    <tr>
+      <th>force_boot</th>
+      <td><p>bootstrapping permutation vector externally defined. Default
+is <code>NULL</code>. Has to be provided a dataframe, where each column represent
+indexes of the resampled observations for each bootsrtap iteration.</p></td>
+    </tr>
+    <tr>
+      <th>force_lambda</th>
+      <td><p>allows to specify one lamda value. Shoul be 0, when we
+want to switch to the linear regression.</p></td>
+    </tr>
+    <tr>
+      <th>n_folds</th>
+      <td><p>number of folds for cross-validation</p></td>
+    </tr>
+    <tr>
+      <th>reduced</th>
+      <td><p>if TRUE terurns reduced outpur without specific regression details.</p></td>
+    </tr>
     </table>
     
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>It produces a list of four elements:</p><ul>
-<li><p>`<code>target_id</code> position of the <code>o</code> (observation element in the named vector)</p></li>
-<li><p><code>target_y_hat</code> value of the <code>o</code></p></li>
-<li><p><code>source_id</code> position of the nearest match in the alternatives vector <code>m</code></p></li>
-<li><p><code>source_y_hat</code> value of the nearest match.</p></li>
-</ul>
+    <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
 
     
+    
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>lassopmm</span>)
-<span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"a"</span> <span class='kw'>=</span> <span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='fl'>3</span>)</div><div class='output co'>#&gt; $target_id
-#&gt; [1] "a"
-#&gt; 
-#&gt; $target_y_hat
-#&gt; [1] 10
-#&gt; 
-#&gt; $source_id
-#&gt; NULL
-#&gt; 
-#&gt; $source_y_hat
-#&gt; [1] 9
-#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"a"</span> <span class='kw'>=</span> <span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/setNames'>setNames</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='no'>letters</span>[<span class='fl'>1</span>:<span class='fl'>8</span>]), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $target_id
-#&gt; [1] "a"
-#&gt; 
-#&gt; $target_y_hat
-#&gt; [1] 10
-#&gt; 
-#&gt; $source_id
-#&gt; [1] "c"
-#&gt; 
-#&gt; $source_y_hat
-#&gt; [1] 10
-#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>9</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/setNames'>setNames</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='no'>letters</span>[<span class='fl'>1</span>:<span class='fl'>8</span>]), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $target_id
-#&gt; NULL
-#&gt; 
-#&gt; $target_y_hat
-#&gt; [1] 9
-#&gt; 
-#&gt; $source_id
-#&gt; [1] "b"
-#&gt; 
-#&gt; $source_y_hat
-#&gt; [1] 9
-#&gt; </div><div class='input'><span class='fu'>find_one_near</span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>10</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>8</span>:<span class='fl'>15</span>), <span class='fl'>5</span>)</div><div class='output co'>#&gt; $target_id
-#&gt; NULL
-#&gt; 
-#&gt; $target_y_hat
-#&gt; [1] 10
-#&gt; 
-#&gt; $source_id
-#&gt; NULL
-#&gt; 
-#&gt; $source_y_hat
-#&gt; [1] 10
-#&gt; </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
       
-      <li><a href="#value">Value</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+      <li><a href="#functions">Functions</a></li>
+          </ul>
 
   </div>
 </div>

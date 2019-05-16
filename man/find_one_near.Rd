@@ -28,7 +28,7 @@ It produces a list of four elements:
 Internal function to help in matching observations.
 }
 \examples{
-library(syntheticpanel)
+library(lassopmm)
 find_one_near(c("a" = 10), c(8:15), 3)
 find_one_near(c("a" = 10), setNames(c(8:15), letters[1:8]), 5)
 find_one_near(c(9), setNames(c(8:15), letters[1:8]), 5)

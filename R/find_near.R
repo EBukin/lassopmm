@@ -14,7 +14,7 @@
 #' @export
 #'
 #' @examples
-#' library(syntheticpanel)
+#' library(lassopmm)
 #' find_one_near(c("a" = 10), c(8:15), 3)
 #' find_one_near(c("a" = 10), setNames(c(8:15), letters[1:8]), 5)
 #' find_one_near(c(9), setNames(c(8:15), letters[1:8]), 5)
@@ -53,7 +53,7 @@ find_one_near <- function(o, m, n_near = 5) {
 #' library(dplyr)
 #' library(purrr)
 #' library(glmnet)
-#' library(syntheticpanel)
+#' library(lassopmm)
 #'
 #' obs <- setNames(rnorm(5), as.character(1:5))
 #' match_v <- setNames(rnorm(50), as.character(1:50))

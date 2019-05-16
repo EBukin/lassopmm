@@ -38,7 +38,7 @@
 #' library(dplyr)
 #' library(purrr)
 #' library(glmnet)
-#' library(syntheticpanel)
+#' library(lassopmm)
 #'
 #' # Run estimate of a fake data
 #' XX <- as.matrix(mtcars[, !names(mtcars) %in% "hp"])
@@ -59,7 +59,7 @@
 #' # Running estimations on every single bootstrap permutation vector
 #' a_boot <-
 #'   perm_example %>%
-#'   purrr::map(~ syntheticpanel::estimate_matches(
+#'   purrr::map(~ lassopmm::estimate_matches(
 #'     source_x_mat = XX[.x, ],
 #'     source_y_mat = YY[.x, ],
 #'     source_w_mat = WW[.x, ],

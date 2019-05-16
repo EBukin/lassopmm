@@ -1,10 +1,10 @@
-#' syntheticpanel: A package for
+#' lassopmm:
 #'
 #' The package provides
 #'
 #' @section Functions:
-#' The foo functions ...
+#'
 #'
 #' @docType package
-#' @name syntheticpanel
+#' @name lassopmm
 NULL

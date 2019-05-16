@@ -102,7 +102,7 @@ bt_groups <- c("psu")     # Grouping variable for bootsrapping.
 n_nearest <- 1    # numebr of the nearest observations to drow a random match
 set.seed(11223344)
 imputation <-
-  find_source_for_target(
+  lassopmm(
               source = p_0_exmple, 
               target = p_1_exmple,
               dep_var = dep, indep_var = indep, weight_var = weight,

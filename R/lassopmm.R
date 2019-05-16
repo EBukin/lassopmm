@@ -22,7 +22,7 @@
 #' @export
 #'
 #'
-find_source_for_target <-
+lassopmm <-
   function(source,
              target,
              dep_var,

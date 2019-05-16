@@ -22,7 +22,7 @@ library(dplyr)
 library(purrr)
 library(tidyr)
 library(glmnet)
-library(syntheticpanel)
+library(lassopmm)
 
 df <- tibble::tibble(id = 1:30, group = sort(rep(1:3, 10)))
 get_bootstrap_permutation(df, 3)
