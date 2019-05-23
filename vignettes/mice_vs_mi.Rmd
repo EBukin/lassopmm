@@ -24,6 +24,7 @@ Using R for the same kind of analysis on the same data.
 suppressMessages(library(dplyr))
 suppressMessages(library(tidyr))
 suppressMessages(library(mice))
+suppressMessages(library(mitools))
 ```
 ```{r eval=FALSE}
 stata_pool_data <- 
@@ -59,6 +60,7 @@ glimpse(stata_pmm_part)
 
 Finally, we convert this data to the `mice` form and run basic analysis of the means and standard deviations. To estimate mean of the multiple imputation data in R using mice package, we need to use regression methods. We basically regress our variable of interest with one intercept only and summaries the statistics on the pooled multiple imputation data set. For more information about that wee the book [Flexible Imputation of Missing Data](https://stefvanbuuren.name/fimd/) and specifically [chapter 2.3](https://stefvanbuuren.name/fimd/sec-whyandwhen.html) and [chapter 2.4](https://stefvanbuuren.name/fimd/sec-inference.html).
 
+## Multiple imputations using `mice` package
 
 ```{r}
 stt <- as.mids(stata_pmm_part)
@@ -99,4 +101,22 @@ Within VCE type:     Analytic             max     =       4.12
        price |   6711.486    1521.65      2535.511    10887.46
 --------------------------------------------------------------
 ```
+
+## Multiple imputations using 'mitools'
+
+```{r}
+dda <-
+  stata_pmm_part %>% 
+  filter(!is.na(price)) %>% 
+  rename(id = .id) %>% 
+  group_by(.imp) %>% 
+  nest() %>% 
+  select(data) %>% 
+  unlist(recursive = F, use.names = F)
+dda_mi <- imputationList(dda)
+model <- with(dda_mi, expr = lm(price ~ 1, weights = weight))
+MIcombine(model)
+summary(MIcombine(model))
+```
+
 

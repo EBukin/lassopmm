@@ -51,9 +51,5 @@ want to switch to the linear regression.}
 \item{reduced}{if TRUE terurns reduced outpur without specific regression details.}
 }
 \description{
-The package provides
+The package lassopmm
 }
-\section{Functions}{
-
-}
-

@@ -90,7 +90,8 @@
 <p>Using R for the same kind of analysis on the same data.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dplyr))</a>
 <a class="sourceLine" id="cb1-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(tidyr))</a>
-<a class="sourceLine" id="cb1-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(mice))</a></code></pre></div>
+<a class="sourceLine" id="cb1-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(mice))</a>
+<a class="sourceLine" id="cb1-4" title="4"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/message">suppressMessages</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(mitools))</a></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">stata_pool_data &lt;-<span class="st"> </span></a>
 <a class="sourceLine" id="cb2-2" title="2"><span class="st">  </span>haven<span class="op">::</span><span class="kw"><a href="https://haven.tidyverse.org/reference/read_dta.html">read_dta</a></span>(<span class="st">"DTA-FILE-NAME.dta"</span>) <span class="op">%&gt;%</span><span class="st"> </span></a>
 <a class="sourceLine" id="cb2-3" title="3"><span class="st">  </span>haven<span class="op">::</span><span class="kw"><a href="https://haven.tidyverse.org/reference/zap_labels.html">zap_labels</a></span>()</a></code></pre></div>
@@ -121,6 +122,9 @@
 <a class="sourceLine" id="cb3-24" title="24"><span class="co">#&gt; $ weight &lt;dbl&gt; 3250, 2230, 3220, 4720, 3740, 3200, 1990, 3250, 2230, 3...</span></a>
 <a class="sourceLine" id="cb3-25" title="25"><span class="co">#&gt; $ price  &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 4589, 3798, 6850, 15906, 52...</span></a></code></pre></div>
 <p>Finally, we convert this data to the <code>mice</code> form and run basic analysis of the means and standard deviations. To estimate mean of the multiple imputation data in R using mice package, we need to use regression methods. We basically regress our variable of interest with one intercept only and summaries the statistics on the pooled multiple imputation data set. For more information about that wee the book <a href="https://stefvanbuuren.name/fimd/">Flexible Imputation of Missing Data</a> and specifically <a href="https://stefvanbuuren.name/fimd/sec-whyandwhen.html">chapter 2.3</a> and <a href="https://stefvanbuuren.name/fimd/sec-inference.html">chapter 2.4</a>.</p>
+<div id="multiple-imputations-using-mice-package" class="section level2">
+<h2 class="hasAnchor">
+<a href="#multiple-imputations-using-mice-package" class="anchor"></a>Multiple imputations using <code>mice</code> package</h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">stt &lt;-<span class="st"> </span><span class="kw">as.mids</span>(stata_pmm_part)</a>
 <a class="sourceLine" id="cb4-2" title="2">fit &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/with">with</a></span>(stt, <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/lm">lm</a></span>(price <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">weights =</span> weight))</a>
 <a class="sourceLine" id="cb4-3" title="3">est &lt;-<span class="st"> </span><span class="kw">pool</span>(fit)</a>
@@ -170,9 +174,44 @@ Within VCE type:     Analytic             max     =       4.12
 -------------+------------------------------------------------
        price |   6711.486    1521.65      2535.511    10887.46
 --------------------------------------------------------------</code></pre>
+</div>
+<div id="multiple-imputations-using-mitools" class="section level2">
+<h2 class="hasAnchor">
+<a href="#multiple-imputations-using-mitools" class="anchor"></a>Multiple imputations using ‘mitools’</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">dda &lt;-</a>
+<a class="sourceLine" id="cb6-2" title="2"><span class="st">  </span>stata_pmm_part <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/filter">filter</a></span>(<span class="op">!</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>(price)) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-4" title="4"><span class="st">  </span><span class="kw">rename</span>(<span class="dt">id =</span> .id) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-5" title="5"><span class="st">  </span><span class="kw">group_by</span>(.imp) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-6" title="6"><span class="st">  </span><span class="kw">nest</span>() <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-7" title="7"><span class="st">  </span><span class="kw">select</span>(data) <span class="op">%&gt;%</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb6-8" title="8"><span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unlist">unlist</a></span>(<span class="dt">recursive =</span> F, <span class="dt">use.names =</span> F)</a>
+<a class="sourceLine" id="cb6-9" title="9">dda_mi &lt;-<span class="st"> </span><span class="kw">imputationList</span>(dda)</a>
+<a class="sourceLine" id="cb6-10" title="10">model &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/with">with</a></span>(dda_mi, <span class="dt">expr =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/lm">lm</a></span>(price <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">weights =</span> weight))</a>
+<a class="sourceLine" id="cb6-11" title="11"><span class="kw">MIcombine</span>(model)</a>
+<a class="sourceLine" id="cb6-12" title="12"><span class="co">#&gt; Multiple imputation results:</span></a>
+<a class="sourceLine" id="cb6-13" title="13"><span class="co">#&gt;       with(dda_mi, expr = lm(price ~ 1, weights = weight))</span></a>
+<a class="sourceLine" id="cb6-14" title="14"><span class="co">#&gt;       MIcombine.default(model)</span></a>
+<a class="sourceLine" id="cb6-15" title="15"><span class="co">#&gt;              results      se</span></a>
+<a class="sourceLine" id="cb6-16" title="16"><span class="co">#&gt; (Intercept) 6711.486 1521.65</span></a>
+<a class="sourceLine" id="cb6-17" title="17"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(<span class="kw">MIcombine</span>(model))</a>
+<a class="sourceLine" id="cb6-18" title="18"><span class="co">#&gt; Multiple imputation results:</span></a>
+<a class="sourceLine" id="cb6-19" title="19"><span class="co">#&gt;       with(dda_mi, expr = lm(price ~ 1, weights = weight))</span></a>
+<a class="sourceLine" id="cb6-20" title="20"><span class="co">#&gt;       MIcombine.default(model)</span></a>
+<a class="sourceLine" id="cb6-21" title="21"><span class="co">#&gt;              results      se   (lower   upper) missInfo</span></a>
+<a class="sourceLine" id="cb6-22" title="22"><span class="co">#&gt; (Intercept) 6711.486 1521.65 3718.868 9704.104     11 %</span></a></code></pre></div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+        <div id="tocnav">
+      <h2 class="hasAnchor">
+<a href="#tocnav" class="anchor"></a>Contents</h2>
+      <ul class="nav nav-pills nav-stacked">
+<li><a href="#multiple-imputations-using-mice-package">Multiple imputations using <code>mice</code> package</a></li>
+      <li><a href="#multiple-imputations-using-mitools">Multiple imputations using ‘mitools’</a></li>
+      </ul>
+</div>
       </div>
 
 </div>

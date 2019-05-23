@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Resample a vector of values with repetition — sample_vector • lassopmm</title>
+<title>Classifies variable between thresholds creating 3 groups: poor, vul, mid — detect_poverty • lassopmm</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Resample a vector of values with repetition — sample_vector" />
+<meta property="og:title" content="Classifies variable between thresholds creating 3 groups: poor, vul, mid — detect_poverty" />
 
-<meta property="og:description" content="Resample a vector of values with repetition" />
+<meta property="og:description" content="Classifies variable between thresholds creating 3 groups: poor, vul, mid" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -112,37 +112,52 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Resample a vector of values with repetition</h1>
+    <h1>Classifies variable between thresholds creating 3 groups: poor, vul, mid</h1>
     
-    <div class="hidden name"><code>sample_vector.Rd</code></div>
+    <div class="hidden name"><code>detect_poverty.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Resample a vector of values with repetition</p>
+    <p>Classifies variable between thresholds creating 3 groups: poor, vul, mid</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>sample_vector</span>(<span class='no'>ids</span>)</pre>
+    <pre class="usage"><span class='fu'>detect_poverty</span>(<span class='no'>.data</span>, <span class='no'>income_var</span>, <span class='kw'>suffix</span> <span class='kw'>=</span> <span class='st'>""</span>, <span class='no'>pov_line_1</span>,
+  <span class='kw'>pov_line_2</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>ids</th>
-      <td><p>vector of the values t be resampled</p></td>
+      <th>.data</th>
+      <td><p>data frame to perform calculations on.</p></td>
+    </tr>
+    <tr>
+      <th>income_var</th>
+      <td><p>variable to use for classification</p></td>
+    </tr>
+    <tr>
+      <th>suffix</th>
+      <td><p>to add to the neqyly created variables</p></td>
+    </tr>
+    <tr>
+      <th>pov_line_1, pov_line_2</th>
+      <td><p>values to use as the povery lines. <code>pov_line_1</code> is required.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Same length vector with the resampled values.</p>
+    <p>Same data frame with two or three extra columns. When the
+        <code>pov_line_2</code> is NULL, data frame gains columns <code>poor_suffix</code>,
+        which is 1 for value of the <code>income_var</code> below the poverty
+        line and <code>mid_suffix</code>, wchih is the opposite to the first one.
+        When both povery lines are supplied, third variable <code>mid_suffix</code>
+        is created, which represents the values of the <code>income_var</code> in
+        between two poverty lines.</p>
     
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>lassopmm</span>)
-
-<span class='fu'>sample_vector</span>(<span class='fl'>1</span>:<span class='fl'>10</span>)</div><div class='output co'>#&gt;  [1] 10  4  4  8  1  1 10  7  4  4</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -150,9 +165,7 @@
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+          </ul>
 
   </div>
 </div>

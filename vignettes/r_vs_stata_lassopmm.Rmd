@@ -2,7 +2,7 @@
 title: "R versus STATA 'lassopmm'"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{mi_stata_r}}
+  %\VignetteIndexEntry{lassopmm_stata_r}}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,10 +13,1796 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, error=FALSE}
+format_kable <- function(.data) {
+  .data %>% 
+    knitr::kable(digits = 10) %>%
+    kable_styling(
+      bootstrap_options = c("striped", "condensed", "bordered")) %>%
+    scroll_box(width = "100%", height = "300px")
+}
+
+library(dplyr)
+library(kableExtra)
+library(lassopmm)
+library(mice)
+library(statar)
+library(tidyr)
+library(purrr)
+
+period0 <- 
+  haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata/ARG/cross 13.dta") %>%
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+
+period1 <-
+  haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata/ARG/cross 14.dta") %>% 
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+
+# post_stata_lasso <-
+#   haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata/ARG/argentina_50_mi_10_match_post_lasso.dta") %>%
+#   haven::zap_labels()
+# 
+# post_stata_lasso_mi <-
+#   haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata/ARG/argentina_50_mi_10_match_post_lasso.dta") %>%
+#   haven::zap_labels()
+
+# mi_data <- 
+#   haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata\\ARG\\argentina__mi__match_post_lasso_post_analysis.dta") %>% 
+#   haven::zap_labels() %>% 
+#   janitor::clean_names() %>% 
+#   mutate(.imp = mi_m,
+#          .id = mi_id) 
+# 
+# mi_mice <- 
+#   mi_data %>% 
+#   mice::as.mids()
+
+# pre_stata_lasso <-
+#   haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata/ARG/argentina_50_mi_10_match_pre_lasso.dta") %>% 
+#   haven::zap_labels()  %>% 
+#   janitor::clean_names()
+
+```
+
+## Argentina example
+
+### Running `lassopmm()` in R
+
+Let us follow the example of Argentina. We start with initializing all necessary libraries and loading data.
+
+```{r message=FALSE, eval=FALSE}
+library(dplyr)
+library(kableExtra)
+library(lassopmm)
+library(mice)
+library(statar)
+library(tidyr)
+library(purrr)
+period0 <- 
+  haven::read_dta("DATA LOCATION 0.dta") %>%
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+period1 <-
+  haven::read_dta("DATA LOCATION 1.dta") %>% 
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+```
+
+We have the following set of the parameters used in Stata code for the analysis:
+
+*    Actual data for period 1 is used for predicting income in period 0 and not other way around.
+*    Dependent variable: `lipcf`
+*    Independent variables: ...
+*    Weight variable: ...
+*    Number of bootstrap operations: 50
+*    Number of the nearest matches: 10
+
+We run analysis with the same inputs in R:
+
+```{r}
+dependent_var <- "lipcf"
+independent_vars <- 
+  c("hombre", "aedu", "miembros", "miembros2", 
+    "region1", "region2", "region3", "region4", "region5", "region6", 
+    "hombre_region1", "hombre_region2", "hombre_region3", 
+    "hombre_region4", "hombre_region5", "hombre_region6", 
+    "aedu_region1", "aedu_region2", "aedu_region3", 
+    "aedu_region4", "aedu_region5", "aedu_region6", 
+    "miembros_region1", "miembros_region2", "miembros_region3", 
+    "miembros_region4", "miembros_region5", "miembros_region6", 
+    "miembros2_region1", "miembros2_region2", "miembros2_region3", 
+    "miembros2_region4", "miembros2_region5", "miembros2_region6", 
+    "edad", "edad2", 
+    "edad_region1", "edad_region2", "edad_region3", 
+    "edad_region4", "edad_region5", "edad_region6", 
+    "edad2_region1", "edad2_region2", "edad2_region3", 
+    "edad2_region4", "edad2_region5", "edad2_region6"
+  )
+weight_var <- "pondera"
+n_iterations <- 5
+n_nearest <- 10
+```
+
+Running the analysis is made in one command:
+
+```{r cache=TRUE}
+set.seed(11738)
+r_mi_data_raw <- 
+  lassopmm(period1, 
+           period0, 
+           dep_var = dependent_var, 
+           indep_var = independent_vars, 
+           weight_var = weight_var, 
+           n_near = n_nearest, 
+           n_boot = n_iterations)
+```
+
+### Getting multiple imputations means and mean ", over(x)"
+
+For this comparison, we use variables `g_a` and `g_p` with grouping by `perc` and mobility. Following Stata code, we implement same calculations of `perc`, `g_a` and `g_p` on the `r_mi_data` in R. Following Stata code, we also create variables `mobility_actual` and `mobility_pred`. 
+
+Note that running `lassopmm()` has created one new variable `lipcf_source` for all imputations. In general, the name of the new variable originates from our dependent variable adding to in in the end '_source'. 
+
+```{r}
+r_mi_data <- 
+  r_mi_data_raw %>% 
+  mutate(
+    ipcf_pred = exp(lipcf_source),
+    perc = statar::xtile(ipcf, wt = pondera, n = 5),
+    g_a = (ipcf_2014/ipcf) ^ (1 / abs(2013 - 2014)) - 1,
+    g_p = (ipcf_pred/ipcf) ^ (1 / abs(2013 - 2014)) - 1,
+    poor_pred = if_else(lipcf_source < lpl, 1, 0, NA_real_)) %>% 
+  left_join(
+    tibble(
+      poor = c(1, 0, 1, 0),
+      poor_2014 = c(1, 1, 0, 0),
+      mobility_actual = c(1, 2, 3, 4)
+    ), 
+    by = c("poor", "poor_2014")
+  )%>% 
+  left_join(
+    tibble(
+      poor = c(1, 0, 1, 0),
+      poor_pred = c(1, 1, 0, 0),
+      mobility_pred = c(1, 2, 3, 4)
+    ), 
+    by = c("poor", "poor_pred")
+  )
+```
+
+#### Simple weighted mean
+
+Let us first find simple weighted means of `g_a` and `g_p` on the multiple imputation data and compare it with the same in Stata.
+
+```{r}
+bind_rows(
+  r_mi_data %>% get_mi_mean("g_a", "pondera"),
+  r_mi_data %>% get_mi_mean("g_p", "pondera") 
+  ) %>% 
+  format_kable()
+```
+
+Same as Stata below:
+
+```
+mi estimate: mean g_a g_p [aw = pondera]
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      3,326
+                                  Average RVI     =     1.4442
+                                  Largest FMI     =     0.7227
+                                  Complete DF     =       3325
+DF adjustment:   Small sample     DF:     min     =      86.65
+                                          avg     =   1,704.83
+Within VCE type:     Analytic             max     =   3,323.00
+
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+         g_a |   .0700955   .0114572      .0476316    .0925595
+         g_p |   .2378207   .0353957       .167464    .3081775
+--------------------------------------------------------------
+```
+
+#### Weighted mean by groups of equall size in all imputation
+
+Lets do the same as in the previous section but this time using the group-wise weighted means. We do grouping by `perc` variable, which is derived from the actual values of `ipcf`. Therefore, each imputation has the same values of the `perc` variable and every group created based on the `perc` variable is the same across all imputations.
+
+To demonstrate it, we do the following:
+
+```{r}
+r_mi_data %>% 
+  group_by(.imp, perc) %>% 
+  count() %>% 
+  spread(.imp, n) %>% 
+  format_kable()
+```
+
+The group by means are calculated in the following way:
+
+```{r}
+bind_rows(
+  get_mi_mean_by_group(r_mi_data, "g_a", "perc", "pondera"),
+  get_mi_mean_by_group(r_mi_data, "g_p", "perc", "pondera")
+) %>% 
+  format_kable()
+```
+
+R produces very close results to Stata.
+
+```
+. mi estimate: mean g_a g_p [aw = pondera],over(perc)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      3,326
+                                  Average RVI     =     1.2358
+                                  Largest FMI     =     0.7367
+                                  Complete DF     =       3325
+DF adjustment:   Small sample     DF:     min     =      83.27
+                                          avg     =   1,707.62
+Within VCE type:     Analytic             max     =   3,323.00
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+g_a          |
+           1 |   .4315041   .0447595      .3437451    .5192631
+           2 |   .0446751   .0254186     -.0051626    .0945128
+           3 |   .0474959   .0215545      .0052344    .0897574
+           4 |  -.0302752   .0158428     -.0613377    .0007874
+           5 |  -.1433747   .0119828     -.1668691   -.1198803
+-------------+------------------------------------------------
+g_p          |
+           1 |   1.123281   .1322436      .8605087    1.386054
+           2 |   .3228994   .0677601      .1886621    .4571366
+           3 |   .1243648   .0557208      .0136161    .2351135
+           4 |  -.0863139   .0429758     -.1717136   -.0009142
+           5 |  -.2964972   .0267038     -.3496075    -.243387
+--------------------------------------------------------------
+```
+
+Another example of weighted means by groups equal for many imputations is the following:
+
+
+```{r}
+get_mi_mean_by_group(r_mi_data, "g_a", "mobility_actual", "pondera") %>% 
+  format_kable()
 ```
 
 
+Same analysis in Stata is similar to R.
 
-TBD 
 
+```
+. mi estimate: mean g_a [aw = pondera],over(mobility_actual)
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      3,326
+                                  Average RVI     =     0.0000
+                                  Largest FMI     =     0.0000
+                                  Complete DF     =       3325
+DF adjustment:   Small sample     DF:     min     =   3,323.00
+                                          avg     =   3,323.00
+Within VCE type:     Analytic             max     =   3,323.00
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+           1 |  -.0683318    .038362     -.1435474    .0068838
+           2 |  -.5477778   .0175897     -.5822655   -.5132901
+           3 |   1.163721   .1283974      .9119755    1.415467
+           4 |   .0776682   .0111566      .0557937    .0995428
+--------------------------------------------------------------
+```
+
+
+#### Weighted mean by unequal groups 
+
+
+In this example, we create groups based on the predicted data. Predicted data vary from one imputation to another, therefore, groups created based on this data also have unequal size. This complicates analysis of variance because for calculating within and between variance on the multiple imputation data, all groups have to be of equal size. 
+
+In our analysis, when we create groups based on the `mobility_pred` variable, for every single imputation, each group has different number of observation. In addition, data for imputation 0 (data without imputations) is not available for each group of `mobility_pred`. 
+
+```{r}
+r_mi_data %>% 
+  group_by(.imp, mobility_pred) %>% 
+  count() %>% 
+  spread(.imp, n)%>% 
+  format_kable()
+```
+
+This is, unfortunately, a limitation of the R `mice` package as well as several other R packages for multiple imputations analysis. 
+
+Stata by default resolves this problem adding a note in the end of statistics "Note: Numbers of observations in e(_N) vary among imputations.". However, there is no documentation about this note and problem and the source code is not available. So the way how Stata resolves this problem remains a black box to me at the moment of writing.
+
+To resolve this problem in R, I do some data shuffling. This shuffling only comes to an action with the respective warning messages when we do group-wise calculations, where data is split into groups and calculations are preformed on each group separately.
+
+Problem 1. Absence of the non-imputed data (data for `imputation == 0`) in each group. it is clear that because we use predicted variables for creating groups, we are missing `imputation = 0` data in each group. This is a problem for calculating statistics and in order for it to work, we need to bring the non imputed values back into each group. We do this by simply finding all unique ID for which values were imputed in the groups and add `imputation=0` observations with this IDs to each specific group. 
+
+Problem 2. Unequal groups size. When we have for all iteration in each group necessary for calculating means, we still have unequal group size across iterations. To resolve this problem we randomly sub sample (without repetitions) data for same groups in all imputations to the size of the smallest group. For example, we have 50 imputations for a group with predicted mobility equal to 1. Size of this group 1 in each imputation vary from 18 to 25 observations. In order to make this group of equal size for all imputations, we sub sample each group to the size of 18 observations and run statistics. This is done with the argument `use_random = TRUE` in the function `get_mi_mean_by_group()`. Specifying the same argument as `FALSE` implement slightly different methodology, where instead of random sampling simply first `n` observations in each group are selected, where `n` equal to the size of the smallest group across imputations.
+
+
+```{r warning=FALSE}
+bind_rows(
+  get_mi_mean_by_group(r_mi_data, "g_p", "mobility_pred", "pondera", use_random = TRUE),
+  get_mi_mean_by_group(r_mi_data, "g_p", "mobility_pred", "pondera", use_random = FALSE)
+  ) %>% 
+  format_kable()
+```
+
+Comparing both approaches to the Stata results gives almost identical estimations.
+
+```
+. mi estimate: mean g_p [aw = pondera],over(mobility_pred)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      3,326
+                                  Average RVI     =     2.2503
+                                  Largest FMI     =     0.7617
+                                  Complete DF     =       3325
+DF adjustment:   Small sample     DF:     min     =      77.58
+                                          avg     =      97.73
+Within VCE type:     Analytic             max     =     122.20
+
+            1: mobility_pred = 1
+            2: mobility_pred = 2
+            3: mobility_pred = 3
+            4: mobility_pred = 4
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+           1 |  -.0133056   .0718002     -.1556967    .1290856
+           2 |  -.5893088   .0311675     -.6513639   -.5272538
+           3 |   1.895496   .2997447      1.302131    2.488861
+           4 |   .2248258   .0335358      .1581773    .2914743
+--------------------------------------------------------------
+Note: Numbers of observations in e(_N) vary among imputations.
+```
+
+Using both adjustments does brings some bias to the results. Using option `use_random = TRUE` make means for the groups with the small number of observations vary from one iteration to another. Using `use_random = FALSE` produces consistent results but may bias the estimates. In any case, when we do inference on the group-wise statistics derived from the multiple imputations data set, we need to take all possible information into account especially, number of degrees of freedoms, confidence intervals and standard errors.
+
+Below, we produce a table, where same statistics was calculated 10 times and estimation parameters were compared between two approaches. For the small sample, besides varying estimates we also find wide confidence intervals making out estimates insignificant
+
+```{r warning=FALSE, message=FALSE, echo=FALSE, cache=TRUE}
+rand <-
+  map_df(1:10, 
+         ~filter(suppressWarnings(
+           get_mi_mean_by_group(r_mi_data, "g_p", "mobility_pred", 
+                                "pondera", use_random = TRUE)),
+           mobility_pred == 1)) %>% 
+  select(1,2,3,4,8,9,16) %>% 
+  rename_at(vars(everything(), -mobility_pred, -variable), list(~paste0(.,"_random")))
+
+fixed <-
+  map_df(1:10, 
+         ~filter(suppressWarnings(
+           get_mi_mean_by_group(r_mi_data, "g_p", "mobility_pred", 
+                                "pondera", use_random = FALSE)),
+           mobility_pred == 1)) %>% 
+  select(1,2,3,4,8,9,16) %>% 
+  rename_at(vars(everything(), -mobility_pred, -variable), list(~paste0(.,"_fixed")))
+
+bind_cols(rand, fixed) %>% 
+  format_kable()
+```
+
+Same calculations for a group of slightly bigger size demonstrate significantly lower variability of estimates.
+
+```{r warning=FALSE, message=FALSE, echo=FALSE, cache=TRUE}
+rand <-
+  map_df(1:10, 
+         ~filter(suppressWarnings(
+           get_mi_mean_by_group(r_mi_data, "g_p", "mobility_pred", 
+                                "pondera", use_random = TRUE)),
+           mobility_pred == 3)) %>% 
+  select(1,2,3,4,8,9,16) %>% 
+  rename_at(vars(everything(), -mobility_pred, -variable), list(~paste0(.,"_random")))
+
+fixed <-
+  map_df(1:10, 
+         ~filter(suppressWarnings(
+           get_mi_mean_by_group(r_mi_data, "g_p", "mobility_pred", 
+                                "pondera", use_random = FALSE)),
+           mobility_pred == 3)) %>% 
+  select(1,2,3,4,8,9,16) %>% 
+  rename_at(vars(everything(), -mobility_pred, -variable), list(~paste0(.,"_fixed")))
+
+bind_cols(rand, fixed) %>% 
+  format_kable()
+```
+
+
+### Reproducing mobility statistics
+
+To help us with reproducing mobility we created several help functions. Below, we calculated state of poverty for 2 poverty lines and different incomes:
+
+*    `ipcf` - the actually observed income from panel data and variable `poor_act`, `vul_act` and `mid_act` represent respective poverty categories.
+*    `ipcf_pred` - income predicted using the `lassopmm`
+*    `ipcf_2014` - income in 2014 data (period 0 for our calculations).
+
+
+```{r}
+pl_1 <- 5.5 * 30.41667
+pl_2 <- 13 * 30.41667
+
+poverty_calc <- 
+  r_mi_data %>%
+  mutate(ipcf = if_else(.imp == 0, NA_real_, ipcf),
+         ipcf_2014 = if_else(.imp == 0, NA_real_, ipcf_2014)) %>% 
+  detect_poverty(ipcf, "act", pl_1, pl_2) %>%
+  detect_poverty(ipcf_pred, "pred", pl_1, pl_2) %>%
+  detect_poverty(ipcf_2014, "2014", pl_1, pl_2) %>% 
+  select(.id, .imp, pondera, contains("ipcf"), 
+         contains("_act"), -contains("_actual"), 
+         contains("_pred"), contains("_2014"))
+```
+
+At the next step we find all combinations for the variables `poor_`, `vul_` and `mid_` between different periods and create corresponding dummy variables.
+
+```{r message=FALSE}
+poverty_calc2 <-
+  poverty_calc %>%
+  left_join(
+    (.) %>%
+      select(matches("\\d.{1,}_2014$"), matches("\\d.{1,}_act$")) %>%
+      get_all_combinations(mAct)
+  )  %>%
+  left_join(
+    (.) %>%
+      select(matches("\\d.{1,}_2014$"), matches("\\d.{1,}_pred$")) %>%
+      get_all_combinations(mPred)
+  )
+```
+
+Finally, we reproduce STATA analysis of the mobility.
+
+```{r}
+compare_vars <-
+  poverty_calc2 %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mAct_")) %>% 
+  sort()
+
+arg_act_mob <- 
+  poverty_calc2 %>% 
+  get_mi_means_table(compare_vars, "pondera") %>% 
+  select(-ubar, -t) %>% 
+  arrange(variable) 
+
+arg_act_mob %>% 
+  format_kable()
+```
+
+R estimations are very close to Stata results.
+
+```
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+   pp_actual |   .0192224   .0023812      .0145537    .0238912
+   pv_actual |   .0409826   .0034381      .0342416    .0477235
+   pm_actual |   .0122592   .0019083      .0085176    .0160009
+   vp_actual |   .0199921   .0024274      .0152327    .0247515
+   vv_actual |   .1974647   .0069037      .1839288    .2110006
+   vm_actual |   .0958358    .005105      .0858267     .105845
+   mp_actual |   .0062807   .0013701      .0035944    .0089669
+   mv_actual |   .0765224   .0046101      .0674834    .0855613
+   mm_actual |   .5314401   .0086539      .5144725    .5484077
+--------------------------------------------------------------
+```
+
+Do the same for predicted poverty.
+
+
+```{r}
+compare_vars2 <-
+  poverty_calc2 %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mPred_")) %>% 
+  sort()
+
+arg_pred_mob <- 
+  poverty_calc2 %>% 
+  get_mi_means_table(compare_vars2, "pondera") %>%  
+  select(-ubar, -t) %>% 
+  arrange(variable) 
+arg_pred_mob %>% 
+  format_kable()
+```
+
+R estimations are very close to Stata results.
+
+```
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+     pp_pred |   .0085054   .0027571      .0030355    .0139753
+     pv_pred |   .0344468   .0085182      .0173932    .0515004
+     pm_pred |    .022895   .0053952      .0121467    .0336432
+     vp_pred |   .0245613   .0041501      .0163515    .0327712
+     vv_pred |   .1468161   .0122115      .1225115    .1711207
+     vm_pred |   .1527355   .0138703      .1250653    .1804057
+     mp_pred |   .0124284   .0029449      .0066041    .0182527
+     mv_pred |   .1337067   .0113548       .111124    .1562894
+     mm_pred |   .4639047   .0151053      .4339309    .4938786
+--------------------------------------------------------------
+
+```
+
+## Chile example
+
+For Chile we perfom same analysis as for Argentina, but this time with less explanations.
+
+```{r echo=FALSE}
+chile_period0 <- 
+  haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata\\CHL\\cross 11.dta") %>%
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+chile_period1 <-
+  haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata\\CHL\\cross 12.dta") %>% 
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+
+```
+
+Loading data
+
+```{r eval=FALSE}
+chile_period0 <- 
+  haven::read_dta("DATA LOCATION 0.dta") %>%
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+chile_period1 <-
+  haven::read_dta("DATA LOCATION 1.dta") %>% 
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+```
+
+Initializing analysis:
+
+```{r}
+dependent_var <- "lipcf"
+independent_vars <- 
+ c("hombre", "aedu", "miembros", "miembros2", "urbano", 
+   "region1", "region2", "region3", "region4", "region5", "region6", 
+   "region7", "region8", "region9", "region10", "region11", "region12", "region13",
+   "hombre_region", "hombre_region1", "hombre_region2", "hombre_region3", 
+   "hombre_region4", "hombre_region5", "hombre_region6", "hombre_region7", 
+   "hombre_region8", "hombre_region9", "hombre_region10", "hombre_region11",
+   "hombre_region12", "hombre_region13", 
+   "aedu_region", "aedu_region1", "aedu_region2", "aedu_region3", 
+   "aedu_region4", "aedu_region5", "aedu_region6", "aedu_region7",
+   "aedu_region8", "aedu_region9", "aedu_region10", "aedu_region11",
+   "aedu_region12", "aedu_region13", 
+   "miembros_region", "miembros_region1", "miembros_region2", "miembros_region3",
+   "miembros_region4", "miembros_region5", "miembros_region6", "miembros_region7",
+   "miembros_region8", "miembros_region9", "miembros_region10", "miembros_region11",
+   "miembros_region", "miembros_region13", 
+   "miembros2_region", "miembros2_region1", "miembros2_region2", "miembros2_region3",
+   "miembros2_region4", "miembros2_region5", "miembros2_region6", "miembros2_region7",
+   "miembros2_region8", "miembros2_region9", "miembros2_region10", "miembros2_region11",
+   "miembros2_region12", "miembros2_region13", 
+   "urbano_region", "urbano_region1", "urbano_region2", "urbano_region3", 
+   "urbano_region4", "urbano_region5", "urbano_region6", "urbano_region7",
+   "urbano_region8", "urbano_region9", "urbano_region10", "urbano_region11",
+   "urbano_region12", "urbano_region13", 
+   "edad", "edad2", 
+   "edad_region", "edad_region1", "edad_region2", "edad_region3", 
+   "edad_region4", "edad_region5", "edad_region6", "edad_region7",
+   "edad_region8", "edad_region9", "edad_region10", "edad_region11", 
+   "edad_region12", "edad_region13",
+   "edad2_region", "edad2_region1", "edad2_region2", "edad2_region3", 
+   "edad2_region4", "edad2_region5", "edad2_region6", "edad2_region7", 
+   "edad2_region8", "edad2_region9", "edad2_region10", "edad2_region11", 
+   "edad2_region12", "edad2_region13")
+weight_var <- "pondera"
+n_iterations <- 5
+n_nearest <- 10
+```
+
+Running the analysis is made in one command:
+
+```{r cache=TRUE}
+set.seed(238)
+chile_mi_data_raw <- 
+  lassopmm(chile_period1, 
+           chile_period0, 
+           dep_var = dependent_var, 
+           indep_var = independent_vars, 
+           weight_var = weight_var, 
+           n_near = n_nearest, 
+           n_boot = n_iterations)
+```
+
+Calculating all variable:
+
+```{r}
+chile_mi_data <- 
+  chile_mi_data_raw %>% 
+  mutate(
+    ipcf_pred = exp(lipcf_source),
+    perc = statar::xtile(ipcf, wt = pondera, n = 5),
+    g_a = (ipcf_2012/ipcf) ^ (1 / abs(2011 - 2012)) - 1,
+    g_p = (ipcf_pred/ipcf) ^ (1 / abs(2011 - 2012)) - 1,
+    poor_pred = if_else(lipcf_source < lpl, 1, 0, NA_real_)) %>% 
+  left_join(
+    tibble(
+      poor = c(1, 0, 1, 0),
+      poor_2012 = c(1, 1, 0, 0),
+      mobility_actual = c(1, 2, 3, 4)
+    ), 
+    by = c("poor", "poor_2012")
+  )%>% 
+  left_join(
+    tibble(
+      poor = c(1, 0, 1, 0),
+      poor_pred = c(1, 1, 0, 0),
+      mobility_pred = c(1, 2, 3, 4)
+    ), 
+    by = c("poor", "poor_pred")
+  )
+```
+
+
+#### `mi estimate: mean g_a g_p [aw = pondera],over(perc)`
+
+R:
+
+```{r}
+bind_rows(
+  get_mi_mean_by_group(chile_mi_data, "g_a", "perc", "pondera"),
+  get_mi_mean_by_group(chile_mi_data, "g_p", "perc", "pondera")
+) %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+```
+. mi estimate: mean g_a g_p [aw = pondera],over(perc)
+(system variable _mi_id updated due to changed number of obs.)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      4,156
+                                  Average RVI     =     1.2479
+                                  Largest FMI     =     0.7653
+                                  Complete DF     =       4155
+DF adjustment:   Small sample     DF:     min     =      78.29
+                                          avg     =   2,122.12
+Within VCE type:     Analytic             max     =   4,153.00
+
+            1: perc = 1
+            2: perc = 2
+            3: perc = 3
+            4: perc = 4
+            5: perc = 5
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+g_a          |
+           1 |   .5949204    .036825      .5227236    .6671172
+           2 |   .2715292   .0323309      .2081432    .3349151
+           3 |   .1489667   .0236713      .1025583    .1953751
+           4 |   .0654089   .0180527      .0300159    .1008019
+           5 |  -.0233596   .0231045     -.0686568    .0219375
+-------------+------------------------------------------------
+g_p          |
+           1 |   1.437587   .1337179      1.171985     1.70319
+           2 |   .8113949    .093968      .6249553    .9978345
+           3 |   .3304916   .0641439      .2029623    .4580209
+           4 |    .078469   .0467262     -.0142149    .1711528
+           5 |  -.3150302   .0369235     -.3885349   -.2415254
+--------------------------------------------------------------
+```
+
+#### `mi estimate: mean g_a [aw = pondera],over(mobility_actual)`
+
+R:
+
+```{r}
+get_mi_mean_by_group(chile_mi_data, "g_a", "mobility_actual", "pondera") %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+
+```
+. mi estimate: mean g_a [aw = pondera],over(mobility_actual)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      4,156
+                                  Average RVI     =     0.0000
+                                  Largest FMI     =     0.0000
+                                  Complete DF     =       4155
+DF adjustment:   Small sample     DF:     min     =   4,153.00
+                                          avg     =   4,153.00
+Within VCE type:     Analytic             max     =   4,153.00
+
+            1: mobility_actual = 1
+            2: mobility_actual = 2
+            3: mobility_actual = 3
+            4: mobility_actual = 4
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+           1 |   .0186816   .0224065     -.0252472    .0626104
+           2 |  -.4690032   .0123488     -.4932135    -.444793
+           3 |   1.031568   .0581036      .9176544    1.145483
+           4 |   .1848355   .0127239      .1598898    .2097811
+--------------------------------------------------------------
+```
+
+#### `mi estimate: mean g_p [aw = pondera],over(mobility_pred)`
+
+R:
+
+```{r warning=FALSE}
+bind_rows(
+  get_mi_mean_by_group(chile_mi_data, "g_p", "mobility_pred", "pondera", use_random = TRUE),
+  get_mi_mean_by_group(chile_mi_data, "g_p", "mobility_pred", "pondera", use_random = FALSE)
+  ) %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+```
+. mi estimate: mean g_p [aw = pondera],over(mobility_pred)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      4,156
+                                  Average RVI     =     1.9462
+                                  Largest FMI     =     0.6842
+                                  Complete DF     =       4155
+DF adjustment:   Small sample     DF:     min     =      98.72
+                                          avg     =     104.59
+Within VCE type:     Analytic             max     =     114.86
+
+            1: mobility_pred = 1
+            2: mobility_pred = 2
+            3: mobility_pred = 3
+            4: mobility_pred = 4
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+           1 |    .036347   .0483942     -.0595139    .1322079
+           2 |  -.5350016   .0193434      -.573377   -.4966262
+           3 |    1.90831   .1699261      1.571128    2.245492
+           4 |   .3443257   .0340776      .2767523    .4118991
+--------------------------------------------------------------
+Note: Numbers of observations in e(_N) vary among imputations.
+```
+
+### Poverty analysis 
+
+```{r message=FALSE}
+pl_1 <- 6 * 30.41667
+pl_2 <- 14 * 30.41667
+
+chile_poverty_calc <- 
+  chile_mi_data %>%
+  mutate(ipcf = if_else(.imp == 0, NA_real_, ipcf),
+         ipcf_2012 = if_else(.imp == 0, NA_real_, ipcf_2012)) %>% 
+  detect_poverty(ipcf, "act", pl_1, pl_2) %>%
+  detect_poverty(ipcf_pred, "pred", pl_1, pl_2) %>%
+  detect_poverty(ipcf_2012, "2012", pl_1, pl_2) %>% 
+  select(.id, .imp, pondera, contains("ipcf"), 
+         contains("_act"), -contains("_actual"), 
+         contains("_pred"), contains("_2012")) %>%
+  left_join(
+    (.) %>%
+      select(matches("\\d.{1,}_2012$"), matches("\\d.{1,}_act$")) %>%
+      get_all_combinations(mAct)
+  )  %>%
+  left_join(
+    (.) %>%
+      select(matches("\\d.{1,}_2012$"), matches("\\d.{1,}_pred$")) %>%
+      get_all_combinations(mPred)
+  )
+```
+
+#### Actual mobility
+
+R: 
+
+```{r}
+compare_vars <-
+  chile_poverty_calc %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mAct_")) %>% 
+  sort()
+chil_act_mob <- 
+  chile_poverty_calc %>% 
+  get_mi_means_table(compare_vars, "pondera") %>% 
+  select(-ubar, -t) %>% 
+  arrange(variable) 
+chil_act_mob %>% 
+  format_kable()
+```
+
+Stata (additional statistics is ommited):
+
+```
+. local status "pp pv pm vp vv vm mp mv mm" 
+. foreach x of local status {
+  2.     local s = "`x'"
+  3.         display "`s'"
+  4.         mi estimate: mean `s'_actual [aw = pondera]
+  5. }
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+   pp_actual |   .0122573    .001707      .0089107     .015604
+   pv_actual |   .0313676   .0027042      .0260659    .0366692
+   pm_actual |   .0092114   .0014821      .0063057     .012117
+   vp_actual |   .0318521   .0027243       .026511    .0371932
+   vv_actual |   .2572262   .0067811      .2439316    .2705208
+   vm_actual |   .0755203   .0040992      .0674838    .0835569
+   mp_actual |   .0078785   .0013716      .0051895    .0105675
+   mv_actual |   .1236143   .0051062      .1136035    .1336252
+   mm_actual |   .4510723   .0077196      .4359377    .4662069
+--------------------------------------------------------------
+
+```
+
+#### Predicted mobility
+
+R:
+
+```{r}
+compare_vars2 <-
+  chile_poverty_calc %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mPred_")) %>% 
+  sort()
+chil_pred_mob <- 
+  chile_poverty_calc %>% 
+  get_mi_means_table(compare_vars2, "pondera") %>%  
+  select(-ubar, -t) %>% 
+  arrange(variable) 
+chil_pred_mob %>% 
+  format_kable()
+```
+
+
+Stata:
+
+```
+. local status "pp pv pm vp vv vm mp mv mm"
+. foreach x of local status {
+  2.     local s = "`x'"
+  3.         display "`s'"
+  4.         mi estimate: mean `s'_pred [aw = pondera]
+  5. }
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+     pp_pred |   .0031834   .0018764      -.000556    .0069228
+     pv_pred |    .021069   .0051113      .0108702    .0312679
+     pm_pred |    .013335   .0031729      .0070374    .0196326
+     vp_pred |   .0268082   .0049019      .0170584     .036558
+     vv_pred |    .185902   .0101749      .1657335    .2060706
+     vm_pred |    .148189   .0101427      .1280426    .1683355
+     mp_pred |   .0219964   .0044359      .0131741    .0308186
+     mv_pred |   .2052371   .0108327      .1837517    .2267225
+     mm_pred |   .3742799   .0114412      .3516591    .3969007
+--------------------------------------------------------------
+```
+
+## Peru example
+
+
+```{r echo=FALSE}
+peru_period0 <- 
+  haven::read_dta(
+    "F:\\Drive\\WB\\leonardo\\learning\\eduard-stata\\PER_3years\\cross 14.dta") %>%
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+peru_period1 <-
+  haven::read_dta(
+    "F:\\Drive\\WB\\leonardo\\learning\\eduard-stata\\PER_3years\\cross 16.dta") %>% 
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+
+```
+
+Loading data
+
+```{r eval=FALSE}
+peru_period0 <- 
+  haven::read_dta("DATA LOCATION 0.dta") %>%
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+peru_period1 <-
+  haven::read_dta("DATA LOCATION 1.dta") %>% 
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+```
+
+Initializing analysis:
+
+```{r}
+dependent_var <- "lipcf"
+independent_vars <- 
+ c("hombre", "edad", "aedu", 
+   "region1", "region2", "region3", "region4", "region5", "region6", "region7", 
+   "edad2", "miembros2", 
+   "edad_region", "edad2_region", "hombre_region", "aedu_region", 
+   "miembros_region", "miembros2_region", 
+   "edad_region1", "edad2_region1", "hombre_region1", "aedu_region1", 
+   "miembros_region1", "miembros2_region1", 
+   "edad_region2", "edad2_region2", "hombre_region2", "aedu_region2", 
+   "miembros_region2", "miembros2_region2", 
+   "edad_region3", "edad2_region3", "hombre_region3", "aedu_region3", 
+   "miembros_region3", "miembros2_region3", 
+   "edad_region4", "edad2_region4", "hombre_region4", "aedu_region4", 
+   "miembros_region4", "miembros2_region4", 
+   "edad_region5", "edad2_region5", "hombre_region5", "aedu_region5", 
+   "miembros_region5", "miembros2_region5", 
+   "edad_region6", "edad2_region6", "hombre_region6", "aedu_region6", 
+   "miembros_region6", "miembros2_region6", 
+   "edad_region7", "edad2_region7", "hombre_region7", "aedu_region7")
+weight_var <- "pondera"
+n_iterations <- 5
+n_nearest <- 10
+period0_year <- 2016
+period1_year <- 2014
+```
+
+Running the analysis is made in one command:
+
+```{r cache=TRUE}
+set.seed(2123138)
+peru_mi_data_raw <- 
+  lassopmm(peru_period1, 
+           peru_period0, 
+           dep_var = dependent_var, 
+           indep_var = independent_vars, 
+           weight_var = weight_var, 
+           n_near = n_nearest, 
+           n_boot = n_iterations)
+```
+
+Calculating all variable:
+
+```{r}
+predicted_var_enquo <- rlang::sym(paste0(dependent_var, "_source"))
+predicted_var_enquo <- enquo(predicted_var_enquo)
+
+pred_var_period0_enquo <- rlang::sym(paste0("ipcf_", period0_year))
+pred_var_period0_enquo <- enquo(pred_var_period0_enquo)
+
+poor_period1_enquo <- rlang::sym(paste0("poor_", period0_year))
+poor_period1_enquo <- enquo(poor_period1_enquo)
+
+peru_mi_data <- 
+  peru_mi_data_raw %>% 
+  mutate(
+    ipcf_pred = exp(!!predicted_var_enquo),
+    perc = statar::xtile(ipcf, wt = pondera, n = 5),
+    g_a = (!!pred_var_period0_enquo/ipcf) ^ (1 / abs(period1_year - period0_year)) - 1,
+    g_p = (ipcf_pred/ipcf) ^ (1 / abs(period1_year - period0_year)) - 1,
+    poor_pred = if_else(!!predicted_var_enquo < lpl, 1, 0, NA_real_)) %>% 
+  left_join(
+    tibble(
+      poor = c(1, 0, 1, 0),
+      !!sym(rlang::as_name(poor_period1_enquo)) := c(1, 1, 0, 0),
+      mobility_actual = c(1, 2, 3, 4)
+    ), 
+    by = c("poor", rlang::as_name(poor_period1_enquo))
+  )%>% 
+  left_join(
+    tibble(
+      poor = c(1, 0, 1, 0),
+      poor_pred = c(1, 1, 0, 0),
+      mobility_pred = c(1, 2, 3, 4)
+    ), 
+    by = c("poor", "poor_pred")
+  )
+```
+
+
+#### `mi estimate: mean g_a g_p [aw = pondera],over(perc)`
+
+R:
+
+```{r}
+bind_rows(
+  get_mi_mean_by_group(peru_mi_data, "g_a", "perc", "pondera"),
+  get_mi_mean_by_group(peru_mi_data, "g_p", "perc", "pondera")
+) %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+```
+. mi estimate: mean g_a g_p [aw = pondera],over(perc)
+(system variable _mi_id updated due to changed number of obs.)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      1,120
+                                  Average RVI     =     0.9300
+                                  Largest FMI     =     0.7596
+                                  Complete DF     =       1119
+DF adjustment:   Small sample     DF:     min     =      65.83
+                                          avg     =     609.14
+Within VCE type:     Analytic             max     =   1,117.01
+
+            1: perc = 1
+            2: perc = 2
+            3: perc = 3
+            4: perc = 4
+            5: perc = 5
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+g_a          |
+           1 |   .3517853   .0336582      .2857448    .4178257
+           2 |   .2103931   .0312704      .1490379    .2717484
+           3 |   .1020799   .0244551      .0540969     .150063
+           4 |   .0242125   .0161068     -.0073905    .0558155
+           5 |   -.060096    .015214     -.0899472   -.0302448
+-------------+------------------------------------------------
+g_p          |
+           1 |   .6254801   .0631091      .5006949    .7502653
+           2 |   .2696661   .0536662      .1630107    .3763215
+           3 |   .1272477   .0411645      .0456221    .2088734
+           4 |  -.0157978    .034403     -.0839752    .0523797
+           5 |   -.140624   .0372139     -.2149275   -.0663206
+--------------------------------------------------------------
+```
+
+#### `mi estimate: mean g_a [aw = pondera],over(mobility_actual)`
+
+R:
+
+```{r}
+get_mi_mean_by_group(peru_mi_data, "g_a", "mobility_actual", "pondera") %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+
+```
+. mi estimate: mean g_a [aw = pondera],over(mobility_actual)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      1,120
+                                  Average RVI     =     0.0000
+                                  Largest FMI     =     0.0000
+                                  Complete DF     =       1119
+DF adjustment:   Small sample     DF:     min     =   1,117.01
+                                          avg     =   1,117.01
+Within VCE type:     Analytic             max     =   1,117.01
+
+            1: mobility_actual = 1
+            2: mobility_actual = 2
+            3: mobility_actual = 3
+            4: mobility_actual = 4
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+           1 |   .0330261   .0190106     -.0042744    .0703266
+           2 |  -.2965848     .01431     -.3246624   -.2685072
+           3 |   .6980486     .04909      .6017295    .7943677
+           4 |   .0991907   .0118215      .0759959    .1223855
+--------------------------------------------------------------
+```
+
+#### `mi estimate: mean g_p [aw = pondera],over(mobility_pred)`
+
+R:
+
+```{r warning=FALSE}
+bind_rows(
+  get_mi_mean_by_group(peru_mi_data, "g_p", "mobility_pred", "pondera", use_random = TRUE),
+  get_mi_mean_by_group(peru_mi_data, "g_p", "mobility_pred", "pondera", use_random = FALSE)
+  ) %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+```
+. mi estimate: mean g_p [aw = pondera],over(mobility_pred)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =      1,120
+                                  Average RVI     =     1.9750
+                                  Largest FMI     =     0.7310
+                                  Complete DF     =       1119
+DF adjustment:   Small sample     DF:     min     =      71.71
+                                          avg     =      90.32
+Within VCE type:     Analytic             max     =     106.53
+
+            1: mobility_pred = 1
+            2: mobility_pred = 2
+            3: mobility_pred = 3
+            4: mobility_pred = 4
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+           1 |   .1001192   .0371871      .0263964    .1738419
+           2 |  -.3541853   .0218472       -.39774   -.3106306
+           3 |   .9141378   .0803982      .7547496    1.073526
+           4 |   .1149986   .0266164      .0619933    .1680039
+--------------------------------------------------------------
+Note: Numbers of observations in e(_N) vary among imputations.
+```
+
+### Poverty analysis 
+
+```{r message=FALSE}
+pl_1 <- 5.5 * 30.41667
+pl_2 <- 13 * 30.41667
+
+peru_poverty_calc <- 
+  peru_mi_data %>%
+  mutate(ipcf = if_else(.imp == 0, NA_real_, ipcf),
+         !!pred_var_period0_enquo := if_else(.imp == 0, NA_real_, !!pred_var_period0_enquo)) %>% 
+  detect_poverty(ipcf, "act", pl_1, pl_2) %>%
+  detect_poverty(ipcf_pred, "pred", pl_1, pl_2) %>%
+  detect_poverty(!!pred_var_period0_enquo, period0_year, pl_1, pl_2) %>% 
+  select(.id, .imp, pondera, contains("ipcf"), 
+         contains("_act"), -contains("_actual"), 
+         contains("_pred"), contains(paste0("_", period0_year))) %>%
+  left_join(
+    (.) %>%
+      select(matches(paste0("\\d.{1,}_", period0_year,"$")), matches("\\d.{1,}_act$")) %>%
+      get_all_combinations(mAct)
+  )  %>%
+  left_join(
+    (.) %>%
+      select(matches(paste0("\\d.{1,}_", period0_year,"$")), matches("\\d.{1,}_pred$")) %>%
+      get_all_combinations(mPred)
+  )
+```
+
+#### Actual mobility
+
+R: 
+
+```{r}
+compare_vars <-
+  peru_poverty_calc %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mAct_")) %>% 
+  sort()
+
+peru_act_mob <- 
+  peru_poverty_calc %>% 
+  get_mi_means_table(compare_vars, "pondera") %>% 
+  select(-ubar, -t) %>% 
+  arrange(variable) 
+peru_act_mob %>% 
+  format_kable()
+```
+
+Stata (additional statistics is ommited):
+
+```
+. local status "pp pv pm vp vv vm mp mv mm"
+
+. 
+. foreach x of local status {
+  2.     local s = "`x'"
+  3.         display "`s'"
+  4.         mi estimate: mean `s'_actual [aw = pondera]
+  5. }
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+   pp_actual |   .1338663   .0101792      .1138938    .1538388
+   pv_actual |   .0761469   .0079289      .0605897    .0917041
+   pm_actual |   .0058606   .0022818      .0013835    .0103377
+   vp_actual |   .0935573   .0087055      .0764763    .1106382
+   vv_actual |   .2259049    .012501      .2013768     .250433
+   vm_actual |   .0794453   .0080843      .0635831    .0953075
+   mp_actual |   .0199651   .0041816      .0117604    .0281698
+   mv_actual |   .1465353   .0105718      .1257925    .1672782
+   mm_actual |   .2187184   .0123575      .1944718    .2429649
+--------------------------------------------------------------
+
+```
+
+#### Predicted mobility
+
+R:
+
+```{r}
+compare_vars2 <-
+  peru_poverty_calc %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mPred_")) %>% 
+  sort()
+peru_pred_mob <- 
+  peru_poverty_calc %>% 
+  get_mi_means_table(compare_vars2, "pondera") %>%  
+  select(-ubar, -t) %>% 
+  arrange(variable) 
+peru_pred_mob %>% 
+  format_kable()
+```
+
+
+Stata:
+
+```
+. local status "pp pv pm vp vv vm mp mv mm"
+
+. foreach x of local status {
+  2.     local s = "`x'"
+  3.         display "`s'"
+  4.         mi estimate: mean `s'_pred [aw = pondera]
+  5. }
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+     pp_pred |   .1045939   .0124262      .0800627    .1291251
+     pv_pred |     .09075   .0158537      .0591705    .1223295
+     pm_pred |   .0241286   .0083927      .0074151     .040842
+     vp_pred |   .0967613   .0139855      .0690274    .1244952
+     vv_pred |    .196144   .0221239      .1520628    .2402252
+     vm_pred |   .1094223   .0152451      .0791622    .1396824
+     mp_pred |   .0460334   .0100943      .0260052    .0660617
+     mv_pred |   .1616931   .0204864       .120876    .2025103
+     mm_pred |   .1704734   .0172201      .1363579    .2045889
+--------------------------------------------------------------
+```
+
+
+## Nicaragua example
+
+
+```{r echo=FALSE}
+nicaragua_period0 <- 
+  haven::read_dta(
+    "F:\\Drive\\WB\\leonardo\\learning\\eduard-stata\\NIC\\cross 01.dta") %>%
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+nicaragua_period1 <-
+  haven::read_dta(
+    "F:\\Drive\\WB\\leonardo\\learning\\eduard-stata\\NIC\\cross 05.dta") %>% 
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+
+```
+
+Loading data
+
+```{r eval=FALSE}
+nicaragua_period0 <- 
+  haven::read_dta("DATA LOCATION 0.dta") %>%
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+nicaragua_period1 <-
+  haven::read_dta("DATA LOCATION 1.dta") %>% 
+  haven::zap_labels() %>% 
+  mutate(pondera = pondera * miembros)
+```
+
+Initializing analysis:
+
+```{r}
+dependent_var <- "lipcf"
+independent_vars <- 
+  c("hombre", "aedu", "miembros", "miembros2", "urbano", 
+    "region1", "region2", "region3", "region4", 
+    "hombre_region", "hombre_region1", "hombre_region2", 
+    "hombre_region3", "hombre_region4", 
+    "aedu_region", "aedu_region1", "aedu_region2", 
+    "aedu_region3", "aedu_region4", 
+    "miembros_region", "miembros_region1", "miembros_region", 
+    "miembros_region3", "miembros_region4", 
+    "miembros2_region", "miembros2_region1", "miembros2_region2", 
+    "miembros2_region3", "miembros2_region4", 
+    "urbano_region", "urbano_region1", "urbano_region2", 
+    "urbano_region3", "urbano_region4", 
+    "edad", "edad2", 
+    "edad_region", "edad_region1", "edad_region2", 
+    "edad_region3", "edad_region4", 
+    "edad2_region", "edad2_region1", "edad2_region2", 
+    "edad2_region3", "edad2_region4")
+weight_var <- "pondera"
+n_iterations <- 5
+n_nearest <- 10
+period0_year <- 2005
+period1_year <- 2001
+```
+
+Running the analysis is made in one command:
+
+```{r cache=TRUE}
+set.seed(3138)
+nicaragua_mi_data_raw <- 
+  lassopmm(nicaragua_period1, 
+           nicaragua_period0, 
+           dep_var = dependent_var, 
+           indep_var = independent_vars, 
+           weight_var = weight_var, 
+           n_near = n_nearest, 
+           n_boot = n_iterations)
+```
+
+Calculating all variable:
+
+```{r}
+predicted_var_enquo <- rlang::sym(paste0(dependent_var, "_source"))
+predicted_var_enquo <- enquo(predicted_var_enquo)
+
+pred_var_period0_enquo <- rlang::sym(paste0("ipcf_", period0_year))
+pred_var_period0_enquo <- enquo(pred_var_period0_enquo)
+
+poor_period1_enquo <- rlang::sym(paste0("poor_", period0_year))
+poor_period1_enquo <- enquo(poor_period1_enquo)
+
+nicaragua_mi_data <- 
+  nicaragua_mi_data_raw %>% 
+  mutate(
+    ipcf_pred = exp(!!predicted_var_enquo),
+    perc = statar::xtile(ipcf, wt = pondera, n = 5),
+    g_a = (!!pred_var_period0_enquo/ipcf) ^ (1 / abs(period1_year - period0_year)) - 1,
+    g_p = (ipcf_pred/ipcf) ^ (1 / abs(period1_year - period0_year)) - 1,
+    poor_pred = if_else(!!predicted_var_enquo < lpl, 1, 0, NA_real_)) %>% 
+  left_join(
+    tibble(
+      poor = c(1, 0, 1, 0),
+      !!sym(rlang::as_name(poor_period1_enquo)) := c(1, 1, 0, 0),
+      mobility_actual = c(1, 2, 3, 4)
+    ), 
+    by = c("poor", rlang::as_name(poor_period1_enquo))
+  )%>% 
+  left_join(
+    tibble(
+      poor = c(1, 0, 1, 0),
+      poor_pred = c(1, 1, 0, 0),
+      mobility_pred = c(1, 2, 3, 4)
+    ), 
+    by = c("poor", "poor_pred")
+  )
+```
+
+
+#### `mi estimate: mean g_a g_p [aw = pondera],over(perc)`
+
+R:
+
+```{r}
+bind_rows(
+  get_mi_mean_by_group(nicaragua_mi_data, "g_a", "perc", "pondera"),
+  get_mi_mean_by_group(nicaragua_mi_data, "g_p", "perc", "pondera")
+) %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+```
+. mi estimate: mean g_a g_p [aw = pondera],over(perc)
+(system variable _mi_id updated due to changed number of obs.)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =        907
+                                  Average RVI     =     0.9194
+                                  Largest FMI     =     0.7430
+                                  Complete DF     =        906
+DF adjustment:   Small sample     DF:     min     =      65.62
+                                          avg     =     501.82
+Within VCE type:     Analytic             max     =     904.01
+
+            1: perc = 1
+            2: perc = 2
+            3: perc = 3
+            4: perc = 4
+            5: perc = 5
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+g_a          |
+           1 |   .2915572   .0188119      .2546371    .3284773
+           2 |   .1255268   .0139331      .0981818    .1528718
+           3 |   .0615116   .0143319       .033384    .0896393
+           4 |    .037963   .0141466      .0101989     .065727
+           5 |  -.0252582   .0148975     -.0544959    .0039795
+-------------+------------------------------------------------
+g_p          |
+           1 |   .3565944   .0292254      .2988223    .4143665
+           2 |   .1620549   .0310642      .1001321    .2239776
+           3 |   .0887222    .030527      .0277665    .1496779
+           4 |   .0124655   .0223407     -.0317631    .0566942
+           5 |  -.1098526   .0221231     -.1537613   -.0659439
+--------------------------------------------------------------
+```
+
+#### `mi estimate: mean g_a [aw = pondera],over(mobility_actual)`
+
+R:
+
+```{r}
+get_mi_mean_by_group(nicaragua_mi_data, "g_a", "mobility_actual", "pondera") %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+
+```
+. mi estimate: mean g_a [aw = pondera],over(mobility_actual)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =        907
+                                  Average RVI     =     0.0000
+                                  Largest FMI     =     0.0000
+                                  Complete DF     =        906
+DF adjustment:   Small sample     DF:     min     =     904.01
+                                          avg     =     904.01
+Within VCE type:     Analytic             max     =     904.01
+
+            1: mobility_actual = 1
+            2: mobility_actual = 2
+            3: mobility_actual = 3
+            4: mobility_actual = 4
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+           1 |   .0779852   .0104618       .057453    .0985174
+           2 |  -.1567073   .0101533     -.1766342   -.1367805
+           3 |    .304892   .0161487      .2731988    .3365853
+           4 |   .0614361   .0119531       .037977    .0848951
+--------------------------------------------------------------
+```
+
+#### `mi estimate: mean g_p [aw = pondera],over(mobility_pred)`
+
+R:
+
+```{r warning=FALSE}
+bind_rows(
+  get_mi_mean_by_group(nicaragua_mi_data, "g_p", "mobility_pred", "pondera", use_random = TRUE),
+  get_mi_mean_by_group(nicaragua_mi_data, "g_p", "mobility_pred", "pondera", use_random = FALSE)
+  ) %>% 
+  format_kable()
+```
+
+
+Stata: 
+
+```
+ mi estimate: mean g_p [aw = pondera],over(mobility_pred)
+
+Multiple-imputation estimates     Imputations     =         50
+Mean estimation                   Number of obs   =        907
+                                  Average RVI     =     1.6899
+                                  Largest FMI     =     0.7249
+                                  Complete DF     =        906
+DF adjustment:   Small sample     DF:     min     =      69.31
+                                          avg     =      97.70
+Within VCE type:     Analytic             max     =     131.68
+
+            1: mobility_pred = 1
+            2: mobility_pred = 2
+            3: mobility_pred = 3
+            4: mobility_pred = 4
+
+--------------------------------------------------------------
+        Over |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+           1 |   .0784313   .0150065      .0487463    .1081162
+           2 |  -.2164065   .0174165     -.2511488   -.1816642
+           3 |   .3853249   .0275537      .3306229    .4400269
+           4 |   .0411381   .0206718       .000099    .0821771
+--------------------------------------------------------------
+Note: Numbers of observations in e(_N) vary among imputations.
+```
+
+### Poverty analysis 
+
+```{r message=FALSE}
+pl_1 <- 5.5 * 30.41667
+pl_2 <- 13 * 30.41667
+
+nicaragua_poverty_calc <- 
+  nicaragua_mi_data %>%
+  mutate(ipcf = if_else(.imp == 0, NA_real_, ipcf),
+         !!pred_var_period0_enquo := if_else(.imp == 0, NA_real_, !!pred_var_period0_enquo)) %>% 
+  detect_poverty(ipcf, "act", pl_1, pl_2) %>%
+  detect_poverty(ipcf_pred, "pred", pl_1, pl_2) %>%
+  detect_poverty(!!pred_var_period0_enquo, period0_year, pl_1, pl_2) %>% 
+  select(.id, .imp, pondera, contains("ipcf"), 
+         contains("_act"), -contains("_actual"), 
+         contains("_pred"), contains(paste0("_", period0_year))) %>%
+  left_join(
+    (.) %>%
+      select(matches(paste0("\\d.{1,}_", period0_year,"$")), matches("\\d.{1,}_act$")) %>%
+      get_all_combinations(mAct)
+  )  %>%
+  left_join(
+    (.) %>%
+      select(matches(paste0("\\d.{1,}_", period0_year,"$")), matches("\\d.{1,}_pred$")) %>%
+      get_all_combinations(mPred)
+  )
+```
+
+#### Actual mobility
+
+R: 
+
+```{r}
+compare_vars <-
+  nicaragua_poverty_calc %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mAct_")) %>% 
+  sort()
+nic_act_mob <- 
+  nicaragua_poverty_calc %>% 
+  get_mi_means_table(compare_vars, "pondera") %>% 
+  select(-ubar, -t) %>% 
+  arrange(variable) 
+nic_act_mob %>% 
+  format_kable()
+```
+
+Stata (additional statistics is ommited):
+
+```
+. local status "pp pv pm vp vv vm mp mv mm"
+
+. 
+. foreach x of local status {
+  2.     local s = "`x'"
+  3.         display "`s'"
+  4.         mi estimate: mean `s'_actual [aw = pondera]
+  5. }
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+   pp_actual |    .410073   .0163405      .3780033    .4421428
+   pv_actual |    .082056    .009118      .0641611    .0999509
+   pm_actual |   .0104444   .0033775      .0038157    .0170731
+   vp_actual |   .1808866   .0127882      .1557885    .2059847
+   vv_actual |   .1294554    .011153      .1075666    .1513442
+   vm_actual |   .0410529   .0065918      .0281158    .0539899
+   mp_actual |   .0261016    .005297      .0157059    .0364974
+   mv_actual |   .0664298   .0082735      .0501923    .0826674
+   mm_actual |   .0535003   .0074761      .0388278    .0681728
+--------------------------------------------------------------
+```
+
+#### Predicted mobility
+
+R:
+
+```{r}
+compare_vars2 <-
+  nicaragua_poverty_calc %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mPred_")) %>% 
+  sort()
+
+nic_pred_mob <- 
+  nicaragua_poverty_calc %>% 
+  get_mi_means_table(compare_vars2, "pondera") %>%  
+  select(-ubar, -t) %>% 
+  arrange(variable) 
+nic_pred_mob %>% 
+  format_kable()
+```
+
+
+Stata:
+
+```
+. local status "pp pv pm vp vv vm mp mv mm"
+
+. foreach x of local status {
+  2.     local s = "`x'"
+  3.         display "`s'"
+  4.         mi estimate: mean `s'_pred [aw = pondera]
+  5. }
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+     pp_pred |   .3754969    .027902      .3199736    .4310202
+     pv_pred |   .1120075   .0142728      .0838148    .1402002
+     pm_pred |   .0272405   .0083761      .0106306    .0438505
+     vp_pred |   .1882514    .025493      .1373318    .2391709
+     vv_pred |   .1104124   .0142902       .082179    .1386457
+     vm_pred |   .0432484   .0098154      .0238226    .0626742
+     mp_pred |   .0533129   .0144214      .0245213    .0821046
+     mv_pred |   .0555213   .0107385      .0342873    .0767554
+     mm_pred |   .0345086   .0087538      .0171871    .0518301
+--------------------------------------------------------------
+```
+
+## Mobility summary
+
+```{r echo=FALSE}
+get_actual_stata <- function(.data) {
+  
+  act_vars <-
+    .data %>%
+    names(.) %>%
+    magrittr::extract(stringr::str_detect(., "_actual")) %>% 
+    sort()
+  
+  .data %>% 
+    get_mi_means_table(act_vars, "pondera") %>% 
+    select(-ubar, -t) %>% 
+    arrange(variable) %>% 
+    left_join(
+      tibble(variable = 
+               c("mm_actual", "mp_actual", "mv_actual", 
+                 "pm_actual", "pp_actual", "pv_actual", 
+                 "vm_actual", "vp_actual", "vv_actual"),
+             var = c("mAct_3m_3m","mAct_3m_1p","mAct_3m_2v",
+                     "mAct_1p_3m","mAct_1p_1p","mAct_1p_2v",
+                     "mAct_2v_3m","mAct_2v_1p","mAct_2v_2v"))
+    ) %>% 
+    mutate(variable = var) %>% 
+    select(-var)%>% 
+    arrange(variable)
+}
+
+
+get_pred_stata <- function(.data) {
+  
+  pred_vars <-
+    .data %>%
+    names(.) %>%
+    magrittr::extract(stringr::str_detect(., "_pred")) %>% 
+    sort()
+  
+  .data %>% 
+    get_mi_means_table(pred_vars, "pondera") %>% 
+    select(-ubar, -t) %>% 
+    arrange(variable) %>% 
+    left_join(
+      tibble(variable = 
+               c("mm_pred", "mp_pred", "mv_pred", 
+                 "pm_pred", "pp_pred", "pv_pred", 
+                 "vm_pred", "vp_pred", "vv_pred"),
+             var = c("mPred_3m_3m","mPred_3m_1p","mPred_3m_2v",
+                     "mPred_1p_3m","mPred_1p_1p","mPred_1p_2v",
+                     "mPred_2v_3m","mPred_2v_1p","mPred_2v_2v"))
+    ) %>% 
+    mutate(variable = var) %>% 
+    select(-var) %>% 
+    arrange(variable)
+}
+
+load_cean_stata <- function(path) {
+  haven::read_dta(path) %>% 
+    haven::zap_labels() %>% 
+    janitor::clean_names() %>% 
+    select(mi_m, mi_id, pondera,
+           matches("([pp]|[pv]|[pm]|[vp]|[vv]|[vm]|[mp]|[mv]|[mm])_pred\\b$"), -contains("group"),
+           matches("([pp]|[pv]|[pm]|[vp]|[vv]|[vm]|[mp]|[mv]|[mm])_actual\\b$"), -contains("group")) %>% 
+    rename(.imp = mi_m,
+           .id = mi_id) %>% 
+    mutate_at(vars(contains("_actual")), list(~ifelse(.imp == 0, NA, .)))
+}
+
+chil_pred_stata <- 
+  load_cean_stata(
+    "F:/Drive/WB/leonardo/learning/eduard-stata/CHL/chilie__mi__match_post_lasso_post_analysis.dta") %>% 
+  get_pred_stata()
+
+per_pred_stata <- 
+  load_cean_stata(
+    "F:/Drive/WB/leonardo/learning/eduard-stata/PER_3years/peru__mi__match_post_lasso_post_analysis.dta") %>% 
+  get_pred_stata()
+
+arg_pred_stata <- 
+  load_cean_stata(
+    "F:/Drive/WB/leonardo/learning/eduard-stata/ARG/argentina__mi__match_post_lasso_post_analysis.dta") %>% 
+  get_pred_stata()
+nic_pred_stata <- 
+  load_cean_stata(
+    "F:/Drive/WB/leonardo/learning/eduard-stata/NIC/nic__mi__match_post_lasso_post_analysis.dta") %>% 
+  get_pred_stata()
+
+```
+
+
+```{r}
+library(ggplot2)
+
+plot_data <-
+  tibble(
+    country = rep(c("Chile", "Peru", "Argentina", "Nicaragua"), each = 3),
+    type = rep(c("Actual", "Pred-Stata", "Pred-R"), 4),
+    data = list(
+      chil_act_mob,
+      chil_pred_stata,
+      chil_pred_mob,
+      
+      peru_act_mob,
+      per_pred_stata,
+      peru_pred_mob,
+      
+      arg_act_mob,
+      arg_pred_stata,
+      arg_pred_mob,
+      
+      nic_act_mob,
+      nic_pred_stata,
+      nic_pred_mob
+    )
+  ) %>%
+  unnest() %>% 
+  separate(variable, c("type2", "from", "to")) %>% 
+  mutate_at(vars(from, to), list(~stringr::str_sub(., 1, 2))) %>% 
+  unite(mobility, from, to, sep = "->") %>% 
+  mutate_at(vars(estimate, `2.5 %`, `97.5 %`), list(~.*100)) %>% 
+  mutate(line_start = `2.5 %`, line_end = `97.5 %`)%>% 
+  mutate(count = country)
+
+plot_country <- 
+  function(.data, COUNTRY) {
+    p <- 
+      .data %>%
+      filter(country == COUNTRY) %>% 
+      ggplot() +
+      aes(
+        x = type,
+        y = estimate,
+        group = mobility,
+        colour = type,
+        fill = type
+      ) +
+      geom_point() +
+      geom_errorbar(aes(ymin = line_start, ymax = line_end), width =
+                      .1) +
+      facet_wrap(. ~ mobility, scales = "free") +
+      labs(title = COUNTRY) +
+      xlab("Estimation method") +
+      ylab("%") 
+    print(p)
+  }
+```
+
+Argentina 
+
+```{r fig.height = 8, fig.width = 8}
+plot_country(plot_data, "Argentina")
+```
+
+Chile 
+
+```{r fig.height = 8, fig.width = 8}
+plot_country(plot_data, "Chile")
+```
+
+Nicaragua
+
+```{r fig.height = 8, fig.width = 8}
+plot_country(plot_data, "Nicaragua")
+```
+
+Peru
+
+```{r fig.height = 8, fig.width = 8}
+plot_country(plot_data, "Peru")
+```
 

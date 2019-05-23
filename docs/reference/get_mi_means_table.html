@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Resample a vector of values with repetition — sample_vector • lassopmm</title>
+<title>Get multiple imputation mean statistics for several variables — get_mi_means_table • lassopmm</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Resample a vector of values with repetition — sample_vector" />
+<meta property="og:title" content="Get multiple imputation mean statistics for several variables — get_mi_means_table" />
 
-<meta property="og:description" content="Resample a vector of values with repetition" />
+<meta property="og:description" content="Get multiple imputation mean statistics for several variables" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -112,47 +112,61 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Resample a vector of values with repetition</h1>
+    <h1>Get multiple imputation mean statistics for several variables</h1>
     
-    <div class="hidden name"><code>sample_vector.Rd</code></div>
+    <div class="hidden name"><code>get_mi_means_table.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Resample a vector of values with repetition</p>
+    <p>Get multiple imputation mean statistics for several variables</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>sample_vector</span>(<span class='no'>ids</span>)</pre>
+    <pre class="usage"><span class='fu'>get_mi_means_table</span>(<span class='no'>.data</span>, <span class='no'>stat_variables_vec</span>, <span class='kw'>weight_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>ids</span> <span class='kw'>=</span> <span class='st'>".id"</span>, <span class='kw'>imps</span> <span class='kw'>=</span> <span class='st'>".imp"</span>, <span class='kw'>use_random</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>.data</th>
+      <td><p>dataframe that could be converted to the mids object to perform
+calculations on the multiple imputations data frame.</p></td>
+    </tr>
+    <tr>
+      <th>stat_variables_vec</th>
+      <td><p>is the atomic vector with variables names</p></td>
+    </tr>
+    <tr>
+      <th>weight_var</th>
+      <td><p>variable for weighting. NULL by default.</p></td>
+    </tr>
+    <tr>
       <th>ids</th>
-      <td><p>vector of the values t be resampled</p></td>
+      <td><p>names of the columns wit the observation-specific ID and
+number of imputation.</p></td>
+    </tr>
+    <tr>
+      <th>imps</th>
+      <td><p>names of the columns wit the observation-specific ID and
+number of imputation.</p></td>
+    </tr>
+    <tr>
+      <th>use_random</th>
+      <td><p>harmonise imputation of the unequal size randomly. By
+default if FALSE, therefore, to equalise sizes of the imputed samples,
+simplu n-first observations is used.</p></td>
     </tr>
     </table>
     
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Same length vector with the resampled values.</p>
-    
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>lassopmm</span>)
-
-<span class='fu'>sample_vector</span>(<span class='fl'>1</span>:<span class='fl'>10</span>)</div><div class='output co'>#&gt;  [1] 10  4  4  8  1  1 10  7  4  4</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#value">Value</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+                </ul>
 
   </div>
 </div>

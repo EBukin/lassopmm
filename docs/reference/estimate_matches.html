@@ -235,12 +235,12 @@ want to switch to the linear regression.</p></td>
 #&gt;   ..- attr(*, "names")= chr [1:10] "Mazda RX4" "Mazda RX4 Wag" "Datsun 710" "Hornet 4 Drive" ...
 #&gt;  $ match       :Classes 'tbl_df', 'tbl' and 'data.frame':	10 obs. of  4 variables:</div><div class='input'>
 <span class='co'># Developing a sample bootsrtap vector</span>
-<span class='no'>perm_example</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>purrr</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map'>map</a></span>(<span class='fl'>1</span>:<span class='fl'>5</span>, ~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/sample.html'>sample</a></span>(<span class='fl'>1</span>:<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>YY</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>YY</span>), <span class='fl'>TRUE</span>))
+<span class='no'>perm_example</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>purrr</span><span class='kw ns'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='fl'>1</span>:<span class='fl'>5</span>, ~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/sample.html'>sample</a></span>(<span class='fl'>1</span>:<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>YY</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>YY</span>), <span class='fl'>TRUE</span>))
 
 <span class='co'># Running estimations on every single bootstrap permutation vector</span>
 <span class='no'>a_boot</span> <span class='kw'>&lt;-</span>
   <span class='no'>perm_example</span> <span class='kw'>%&gt;%</span>
-  <span class='kw pkg'>purrr</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map'>map</a></span>(~ <span class='kw pkg'>lassopmm</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/lassopmm/topics/estimate_matches'>estimate_matches</a></span>(
+  <span class='kw pkg'>purrr</span><span class='kw ns'>::</span><span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='kw pkg'>lassopmm</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/lassopmm/topics/estimate_matches'>estimate_matches</a></span>(
     <span class='kw'>source_x_mat</span> <span class='kw'>=</span> <span class='no'>XX</span>[<span class='no'>.x</span>, ],
     <span class='kw'>source_y_mat</span> <span class='kw'>=</span> <span class='no'>YY</span>[<span class='no'>.x</span>, ],
     <span class='kw'>source_w_mat</span> <span class='kw'>=</span> <span class='no'>WW</span>[<span class='no'>.x</span>, ],
@@ -265,7 +265,7 @@ want to switch to the linear regression.</p></td>
 #&gt; [1,]  4 0.8792  3.662</div><div class='input'>
 <span class='co'># Doing the same with each single bootstrap iteration</span>
 <span class='no'>a_boot</span> <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map'>map</a></span>(<span class='st'>"fit"</span>)</div><div class='output co'>#&gt; [[1]]
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='st'>"fit"</span>)</div><div class='output co'>#&gt; [[1]]
 #&gt; 
 #&gt; Call:  glmnet::glmnet(x = source_x_mat, y = source_y_mat, weights = source_w_mat,      alpha = 1, lambda = lambda_cv$lambda.min) 
 #&gt; 
@@ -302,8 +302,8 @@ want to switch to the linear regression.</p></td>
 #&gt; </div><div class='input'>
 <span class='co'># Extracting coefficinets from each single bootstrap iteration</span>
 <span class='no'>a_boot</span> <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map'>map</a></span>(<span class='st'>"fit"</span>) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map'>map</a></span>(<span class='no'>coefficients</span>)</div><div class='output co'>#&gt; [[1]]
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='st'>"fit"</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='no'>coefficients</span>)</div><div class='output co'>#&gt; [[1]]
 #&gt; 11 x 1 sparse Matrix of class "dgCMatrix"
 #&gt;                      s0
 #&gt; (Intercept) 247.9566066
@@ -380,11 +380,11 @@ want to switch to the linear regression.</p></td>
 #&gt; </div><div class='input'>
 <span class='co'># Combine all coefficients in a table</span>
 <span class='no'>a_boot</span> <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map'>map</a></span>(<span class='st'>"fit"</span>) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map'>map</a></span>(<span class='kw pkg'>broom</span><span class='kw ns'>::</span><span class='no'><a href='https://www.rdocumentation.org/packages/broom/topics/reexports'>tidy</a></span>) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map'>map</a></span>(~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span>(<span class='no'>.x</span>, <span class='no'>term</span>, <span class='no'>estimate</span>)) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/map2'>map2</a></span>(<span class='kw'>.y</span> <span class='kw'>=</span> <span class='fl'>1</span>:<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/length'>length</a></span>(<span class='no'>.</span>), ~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select_all.html'>rename_at</a></span>(<span class='no'>.x</span>, <span class='fu'><a href='https://dplyr.tidyverse.org/reference/vars.html'>vars</a></span>(<span class='no'>estimate</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/paste'>paste0</a></span>(<span class='no'>.</span>, <span class='st'>"_"</span>, <span class='no'>.y</span>)))) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://www.rdocumentation.org/packages/purrr/topics/reduce'>reduce</a></span>(<span class='no'>full_join</span>)</div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 9 x 6</span><span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='st'>"fit"</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='kw pkg'>broom</span><span class='kw ns'>::</span><span class='no'><a href='https://www.rdocumentation.org/packages/broom/topics/reexports'>tidy</a></span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span>(<span class='no'>.x</span>, <span class='no'>term</span>, <span class='no'>estimate</span>)) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map2.html'>map2</a></span>(<span class='kw'>.y</span> <span class='kw'>=</span> <span class='fl'>1</span>:<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/length'>length</a></span>(<span class='no'>.</span>), ~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select_all.html'>rename_at</a></span>(<span class='no'>.x</span>, <span class='fu'><a href='https://dplyr.tidyverse.org/reference/vars.html'>vars</a></span>(<span class='no'>estimate</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/paste'>paste0</a></span>(<span class='no'>.</span>, <span class='st'>"_"</span>, <span class='no'>.y</span>)))) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/reduce.html'>reduce</a></span>(<span class='no'>full_join</span>)</div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 9 x 6</span><span>
 #&gt;   term        estimate_1 estimate_2 estimate_3 estimate_4 estimate_5
 #&gt;   </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>            </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
 #&gt; </span><span style='color: #555555;'>1</span><span> (Intercept)    248.       146.       173.       324.       145.   
