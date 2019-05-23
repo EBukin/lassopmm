@@ -1,8 +1,6 @@
 #' lassopmm:
 #'
-#' The package provides
-#'
-#' @section Functions:
+#' The package lassopmm
 #'
 #'
 #' @docType package

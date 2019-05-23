@@ -33,7 +33,7 @@ sample_vector <- function(ids) {
 #' df <- tibble::tibble(id = 1:30, group = sort(rep(1:3, 10)))
 #' get_bootstrap_permutation(df, 3)
 get_bootstrap_permutation <- function(data, n_boot) {
-  if (is_character(n_boot) ||
+  if (rlang::is_character(n_boot) ||
     n_boot < 0) {
     stop("n_boot must be numeric or integer and greater than 0.")
   }

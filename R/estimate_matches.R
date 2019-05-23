@@ -47,7 +47,9 @@
 #' XX1 <- as.matrix(mtcars[1:10, !names(mtcars) %in% "hp"])
 #'
 #' # Running simple estimation and returning
-#' a <- estimate_matches(source_x_mat = XX, source_y_mat = YY, source_w_mat = WW, target_x_mat = XX1, reduced = FALSE, n_near = 5)
+#' a <- estimate_matches(source_x_mat = XX, source_y_mat = YY,
+#'                       source_w_mat = WW, target_x_mat = XX1,
+#'                       reduced = FALSE, n_near = 5)
 #'
 #' # Extract regression coefficients
 #' a$fit %>% coef()

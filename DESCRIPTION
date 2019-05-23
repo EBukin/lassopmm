@@ -30,7 +30,12 @@ Imports:
     purrr,
     tibble,
     shiny (>= 1.1.0),
-    tidyselect
+    tidyselect,
+    rlang,
+    stringr,
+    mitools,
+    fastDummies,
+    magrittr
 Suggests: 
     knitr,
     rmarkdown,
