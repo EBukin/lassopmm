@@ -7,9 +7,9 @@
 \title{Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic.}
 \usage{
 lassopmm(source, target, dep_var, indep_var, weight_var = NULL,
-  extra_var = NULL, n_near = 10, n_boot = 5, group_boot_var = NULL,
-  force_boot = NULL, force_lambda = NULL, n_folds = 10,
-  reduced = TRUE)
+  extra_var = NULL, strata_vars = NULL, cluster_vars = NULL,
+  n_near = 10, n_boot = 5, force_boot = NULL, force_lambda = NULL,
+  n_folds = 10, reduced = TRUE)
 }
 \arguments{
 \item{source, target}{dataframes with the period 0 and period 1 data
@@ -25,10 +25,16 @@ appear in the process of running the function.}
 Default is `NULL`, when `NULL` equall weights of 1 for each obesrcation
 are assumed.}
 
-\item{extra_var, group_boot_var}{character vectors. Could be \code{NULL}, contain
-one element or a vector of multiple lements. \code{extra_var} represents
+\item{extra_var}{character vectors. Could be \code{NULL}, contain
+one element or a vector of multiple elements. \code{extra_var} represents
 names of the variable, which should be joint from the \code{source} data to
 the \code{target} data based on the match by the dependent variable \code{dep_var}.}
+
+\item{strata_vars, cluster_vars}{character vectors. Could be \code{NULL}, contain
+one element or a vector of multiple elements. \code{strata_vars} exist for
+using stratified sampling in the bootstrapping process. \code{cluster_vars}
+used for clastered sampling in the bootstrapping process. Any combinations
+of variables could be used.}
 
 \item{n_near}{number of the nearest observations to derive a random match.
 If `n_near` is greater than `length(match_vector)`, minimum out of two is

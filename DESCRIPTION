@@ -35,7 +35,8 @@ Imports:
     stringr,
     mitools,
     fastDummies,
-    magrittr
+    magrittr,
+    statar
 Suggests: 
     knitr,
     rmarkdown,

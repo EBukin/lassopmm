@@ -9,10 +9,15 @@
 #' @param weight_var character vector with one name of the weight variable.
 #'     Default is `NULL`, when `NULL` equall weights of 1 for each obesrcation
 #'     are assumed.
-#' @param extra_var,group_boot_var character vectors. Could be \code{NULL}, contain
-#'     one element or a vector of multiple lements. \code{extra_var} represents
+#' @param extra_var character vectors. Could be \code{NULL}, contain
+#'     one element or a vector of multiple elements. \code{extra_var} represents
 #'     names of the variable, which should be joint from the \code{source} data to
 #'     the \code{target} data based on the match by the dependent variable \code{dep_var}.
+#' @param strata_vars,cluster_vars character vectors. Could be \code{NULL}, contain
+#'     one element or a vector of multiple elements. \code{strata_vars} exist for
+#'     using stratified sampling in the bootstrapping process. \code{cluster_vars}
+#'     used for clastered sampling in the bootstrapping process. Any combinations
+#'     of variables could be used.
 #' @param force_boot bootstrapping permutation vector externally defined. Default
 #'     is \code{NULL}. Has to be provided a dataframe, where each column represent
 #'     indexes of the resampled observations for each bootsrtap iteration.
@@ -29,9 +34,10 @@ lassopmm <-
              indep_var,
              weight_var = NULL,
              extra_var = NULL,
+             strata_vars = NULL,
+             cluster_vars = NULL,
              n_near = 10,
              n_boot = 5,
-             group_boot_var = NULL,
              force_boot = NULL,
              force_lambda = NULL,
              n_folds = 10,
@@ -66,51 +72,84 @@ lassopmm <-
     rownames(w_mat) <- 1:nrow(w_mat)
 
     # Creating bootstrap groups
-    if (any(!group_boot_var %in% names(source)) &&
-      !all(!group_boot_var %in% names(source)) &&
-      !is.null(group_boot_var) &&
-      !is.na(group_boot_var)) {
+    if (any(!strata_vars %in% names(source)) &&
+        !all(!strata_vars %in% names(source)) &&
+        !is.null(strata_vars) &&
+        !is.na(strata_vars)) {
       warning(
         paste0(
           "Variable(s) '",
-          paste0(group_boot_var[!group_boot_var %in% names(source)], collapse = "', '"),
-          "' are not listed in the `period 0` dataset.\n",
+          paste0(strata_vars[!strata_vars %in% names(source)], collapse = "', '"),
+          "' do not exist in the `source` data.\n",
           "Only variable(s) '",
-          paste0(group_boot_var[group_boot_var %in% names(source)], collapse = "', '"),
-          "' will be used for creating grouped bootstrap permulation vectors."
+          paste0(strata_vars[strata_vars %in% names(source)], collapse = "', '"),
+          "' will be used for creating stratified bootstrap permulation vectors."
         )
       )
-    } else if (all(!group_boot_var %in% names(source)) &&
-      !is.null(group_boot_var) &&
-      !is.na(group_boot_var)) {
+    } else if (all(!strata_vars %in% names(source)) &&
+               !is.null(strata_vars) &&
+               !is.na(strata_vars)) {
       warning(
         paste0(
           "Variable(s) '",
-          paste0(group_boot_var[!group_boot_var %in% names(source)], collapse = "', '"),
-          "' are not listed in the `period 0` dataset.\n",
+          paste0(strata_vars[!strata_vars %in% names(source)], collapse = "', '"),
+          "' do not exist in the `source` data.\n",
+          "No grouped bootstrap permulation is applied."
+        )
+      )
+    }
+    if (any(!cluster_vars %in% names(source)) &&
+        !all(!cluster_vars %in% names(source)) &&
+        !is.null(cluster_vars) &&
+        !is.na(cluster_vars)) {
+      warning(
+        paste0(
+          "Variable(s) '",
+          paste0(cluster_vars[!cluster_vars %in% names(source)], collapse = "', '"),
+          "' do not exist in the `source` data.\n",
+          "Only variable(s) '",
+          paste0(cluster_vars[cluster_vars %in% names(source)], collapse = "', '"),
+          "' will be used for creating clusters in the bootstrap permulation vectors."
+        )
+      )
+    } else if (all(!cluster_vars %in% names(source)) &&
+               !is.null(cluster_vars) &&
+               !is.na(cluster_vars)) {
+      warning(
+        paste0(
+          "Variable(s) '",
+          paste0(cluster_vars[!cluster_vars %in% names(source)], collapse = "', '"),
+          "' do not exist in the `source` data.\n",
           "No grouped bootstrap permulation is applied."
         )
       )
     }
 
-    if (any(group_boot_var %in% names(source))) {
+    group_mat <-
+      source %>%
+      dplyr::mutate(ids = row_number(), .strata = 1, .cluster = 1)
+
+    # Creating strata variable
+    if (any(strata_vars %in% names(source))) {
       group_mat <-
-        source %>%
-        dplyr::mutate(ids = row_number()) %>%
-        dplyr::group_by(group_boot_var[group_boot_var %in% names(.)]) %>%
-        dplyr::mutate(group = sum(ids)) %>%
-        dplyr::ungroup() %>%
-        dplyr::select(ids, group)
-    } else {
-      group_mat <-
-        source %>%
-        dplyr::mutate(
-          ids = row_number(),
-          group = 1
-        ) %>%
-        dplyr::select(ids, group)
-      group_boot_var <- "group"
+        group_mat %>%
+        dplyr::group_by_at(vars(strata_vars[strata_vars %in% names(source)])) %>%
+        dplyr::mutate(.strata = dplyr::group_indices()) %>%
+        dplyr::ungroup()
     }
+
+    # Creating cluster variable
+    if (any(cluster_vars %in% names(source))) {
+      group_mat <-
+        group_mat %>%
+        dplyr::group_by_at(vars(cluster_vars[cluster_vars %in% names(source)])) %>%
+        dplyr::mutate(.cluster = group_indices()) %>%
+        dplyr::ungroup()
+    }
+
+    group_mat <-
+      group_mat %>%
+      dplyr::select(ids, .strata, .cluster)
 
     # Getting bootstrap permutation vectors
     if (is.null(force_boot)) {

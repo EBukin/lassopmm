@@ -46,7 +46,7 @@ imputation <-
     dep_var = dep,
     indep_var = indep,
     weight_var = weight,
-    group_boot_var = bt_groups,
+    strata_vars = bt_groups,
     extra_var = extrar,
     n_boot = 5, # Numebr of bootstrap iterations
     n_near = 1)

@@ -2,12 +2,12 @@
 % Please edit documentation in R/get_bootstrap_permutation.R
 \name{get_bootstrap_permutation}
 \alias{get_bootstrap_permutation}
-\title{Generates a list of permutation vectors for bootsrapping}
+\title{Generates a list of permutation vectors for bootsrapping (old version not used)}
 \usage{
-get_bootstrap_permutation(data, n_boot)
+get_bootstrap_permutation(.data, n_boot = NULL)
 }
 \arguments{
-\item{data}{dataframe containing two columns \code{group} and \code{id}.}
+\item{.data}{dataframe containing two columns \code{group} and \code{id}.}
 
 \item{n_boot}{number of bootstrap permulations (resamplings).
 If \code{n_rep = 0}, no bootstraping is performed and we have the
@@ -15,15 +15,94 @@ bootstrap sample, whcih consist of the same observations in the same
 order as source data.}
 }
 \description{
-Generates a list of permutation vectors for bootsrapping
+Generates a list of permutation vectors for bootsrapping (old version not used)
 }
 \examples{
+library(tibble)
 library(dplyr)
 library(purrr)
-library(tidyr)
-library(glmnet)
 library(lassopmm)
 
-df <- tibble::tibble(id = 1:30, group = sort(rep(1:3, 10)))
-get_bootstrap_permutation(df, 3)
+# Generating sample data
+n <- 100
+sa_df <-
+  tibble(
+    ids = 1:n,
+    .strata = statar::xtile(ids, 10),
+    .cluster = c(
+      rep(5, n * 0.1),
+      rep(2, n * 0.3),
+      rep(4, n * 0.4),
+      rep(3, n * 0.05),
+      rep(1, n * 0.15)
+    )
+  )
+
+# Dataset, where cluster equall to strata
+sa_df1 <- sa_df \%>\% mutate(.cluster = .strata)
+
+# Dataset, where cluster equall to one number
+sa_df2 <- sa_df \%>\% mutate(.cluster = 0)
+
+# Dataset, where strata equall to one number
+sa_df3 <- sa_df \%>\% mutate(.strata = 1)
+
+# Function for generating cross-tabulation statistics
+my_table <- function(x, y) {
+  a <- table(x, y)
+  b <- cbind(a, t(t(margin.table(a, 1))))
+  cc <-
+    margin.table(a, 2) \%>\%
+    as.matrix() \%>\%
+    t() \%>\%
+    cbind(., sum(.))
+  rbind(b, cc)
+}
+
+# Example of simple bootstrapping with clusters and stratas
+# Original data strcructure
+with(sa_df, my_table(.cluster, .strata))
+# Structure of the three repetedly sampled datasets
+get_bootstrap_permutation(sa_df, 3) \%>\%
+  map(~ tibble(ids = .x) \%>\% left_join(sa_df, "ids")) \%>\%
+  map(~ with(.x, my_table(.cluster, .strata)))
+
+# Example of sampling with clusters and stratas,
+# where data contains clusters equall to stratas.
+# This is an equivalent of the only clustered sampling
+with(sa_df1, my_table(.cluster, .strata))
+# Structure of the three repetedly sampled datasets
+get_bootstrap_permutation(sa_df1, 3) \%>\%
+  map(~ tibble(ids = .x) \%>\% left_join(sa_df1, "ids")) \%>\%
+  map(~ with(.x, my_table(.cluster, .strata)))
+
+# Example of sampling with clusters and stratas,
+# where data contains only one cluster equall to 0
+# This is an equivalent of the only stratified sampling
+with(sa_df2, my_table(.cluster, .strata))
+# Structure of the three repetedly sampled datasets
+get_bootstrap_permutation(sa_df2, 3) \%>\%
+  map(~ tibble(ids = .x) \%>\% left_join(sa_df2, "ids")) \%>\%
+  map(~ with(.x, my_table(.cluster, .strata)))
+
+# Example of sampling with clusters and stratas,
+# where data contains only one strata equall to 0
+# This is an equivalent of the only clustered sampling
+with(sa_df3, my_table(.cluster, .strata))
+# Structure of the three repetedly sampled datasets
+get_bootstrap_permutation(sa_df3, 3) \%>\%
+  map(~ tibble(ids = .x) \%>\% left_join(sa_df3, "ids")) \%>\%
+  map(~ with(.x, my_table(.cluster, .strata)))
+
+# Comparing old bootstrapping logic with the new one
+df <- tibble::tibble(id = 1:30, group = sort(rep(1:3, 10))) \%>\%
+  mutate(ids = id, .strata = group, .cluster = 1)
+
+set.seed(1)
+old <- get_bootstrap_permutation_old(df, 3) \%>\%
+  map(~ sort(.x))
+set.seed(1)
+new <- get_bootstrap_permutation(df, 3) \%>\%
+  map(~ sort(.x))
+all_equal(old, new)
 }
