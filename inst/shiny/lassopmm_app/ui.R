@@ -13,7 +13,6 @@ suppressPackageStartupMessages({
   library(purrr)
   library(tidyr)
   library(janitor)
-  library(haven)
   library(mice)
 })
 
