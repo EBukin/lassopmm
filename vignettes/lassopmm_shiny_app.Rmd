@@ -25,5 +25,5 @@ lassopmm::lassopmm_app()
 ## Example of the shiny app
 
 
-<iframe id="example1" src="https://eduardbukin.shinyapps.io/lassopmm_app/" style="border: none; width: 100%; height: 850px" frameborder="0"></iframe>
+<iframe id="example1" src="https://eddie-dev.cf/shiny/lassopmm_app/" style="border: none; width: 100%; height: 850px" frameborder="0"></iframe>
 
