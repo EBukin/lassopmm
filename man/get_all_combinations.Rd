@@ -12,6 +12,9 @@ get_all_combinations(.data, new_var, clean_name = TRUE,
 
 \item{new_var}{name of the new categorical variable to create for
 representing all combinations of the previous dummy variables.}
+
+\item{clean_name, clean_expr, connector}{technical inputs used for modifying
+resulting variables names.}
 }
 \description{
 Convert a table of dummy variables to a table of its unique combinations

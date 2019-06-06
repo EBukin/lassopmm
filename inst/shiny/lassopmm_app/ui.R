@@ -14,6 +14,7 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(janitor)
   library(haven)
+  library(mice)
 })
 
 options(shiny.maxRequestSize = 100 * 1024^2)

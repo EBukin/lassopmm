@@ -1,0 +1,19 @@
+---
+title: "R script for lassopmm"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{lassopmm_stata_r}}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+Copy this script in R and run lassopmm.
+
+
+```{r, code = readLines("./simple_lassopmm_script.R"), eval=FALSE}
+```
+
+
+
+
