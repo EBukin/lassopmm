@@ -766,12 +766,22 @@ shinyServer(function(input, output, session) {
         caption = "Estimates of mobility from source to target",
         rownames = FALSE,
         colnames = mob_names(),
-        options =
-          list(
-            paging = FALSE,
-            ordering = FALSE,
-            searching = FALSE
+        extensions = c("Buttons"),
+        options = list(
+          dom = c("Bfrtip"),
+          paging = FALSE,
+          ordering = FALSE,
+          searching = FALSE,
+          buttons = list(
+            list(extend = "copy", text = "Copy table"),
+            list(
+              extend = "excel",
+              text = "Download in an Excel file",
+              title = "Mobility statistics"
+            )
           )
+        )
+
       )
     })
 
@@ -786,10 +796,11 @@ shinyServer(function(input, output, session) {
         extensions = c("Buttons", "Scroller"),
         options = list(
           pageLength = 25,
+          searching = FALSE,
           dom = c("Bfrtip"),
           scrollX = TRUE,
           deferRender = TRUE,
-          scrollY = 400,
+          scrollY = FALSE,
           scroller = TRUE,
           buttons = list(
             list(extend = "copy", text = "Copy table"),
