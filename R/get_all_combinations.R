@@ -16,7 +16,7 @@
 #'   get_all_combinations(c)
 #'
 #'
-get_all_combinations <- function(.data, new_var) {
+get_all_combinations <- function(.data, new_var, clean_name = TRUE, clean_expr = "_.{1,}$", connector = "_") {
   new_var <- dplyr::enquo(new_var)
   new_var_name <- rlang::as_name(new_var)
 
@@ -30,7 +30,18 @@ get_all_combinations <- function(.data, new_var) {
         purrr::map2(names(.), ~ case_when(.x == 1 ~ .y)) %>%
         purrr::transpose() %>%
         purrr::map( ~ purrr::keep(.x, ~ !is.na(.x))) %>%
-        purrr::map( ~ stringr::str_c(stringr::str_replace_all(.x, "_.{1,}$", ""), collapse = "_")) %>%
+        {
+          out <- (.)
+          if (clean_name) {
+            out <- out %>%
+              purrr::map( ~ stringr::str_c(stringr::str_replace_all(.x, clean_expr, ""),
+                                           collapse = connector))
+          } else {
+            out <- out %>%
+              purrr::map( ~ stringr::str_c(.x, collapse = connector))
+          }
+          out
+        } %>%
         purrr::map( ~ ifelse(identical(.x, character(0)), NA_character_, .x)) %>%
         unlist()
 

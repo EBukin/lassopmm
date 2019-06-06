@@ -124,7 +124,7 @@ independent_vars <-
     "edad2_region4", "edad2_region5", "edad2_region6"
   )
 weight_var <- "pondera"
-n_iterations <- 5
+n_iterations <- 50
 n_nearest <- 10
 ```
 

@@ -21,6 +21,7 @@
 #' @param force_boot bootstrapping permutation vector externally defined. Default
 #'     is \code{NULL}. Has to be provided a dataframe, where each column represent
 #'     indexes of the resampled observations for each bootsrtap iteration.
+#' @param updateProgress function that updates the progress bars in the shiny app.
 #' @inheritParams estimate_matches
 #' @inheritParams get_bootstrap_permutation
 #'
@@ -41,7 +42,8 @@ lassopmm <-
              force_boot = NULL,
              force_lambda = NULL,
              n_folds = 10,
-             reduced = TRUE) {
+             reduced = TRUE,
+             updateProgress = NULL) {
     y_mat <- source %>% dplyr::select(dep_var) %>% as.matrix()
     x_mat <- source %>% dplyr::select(indep_var) %>% as.matrix()
     x1_mat <- target %>% dplyr::select(indep_var) %>% as.matrix()
@@ -73,9 +75,9 @@ lassopmm <-
 
     # Creating bootstrap groups
     if (any(!strata_vars %in% names(source)) &&
-        !all(!strata_vars %in% names(source)) &&
-        !is.null(strata_vars) &&
-        !is.na(strata_vars)) {
+      !all(!strata_vars %in% names(source)) &&
+      !is.null(strata_vars) &&
+      !is.na(strata_vars)) {
       warning(
         paste0(
           "Variable(s) '",
@@ -87,8 +89,8 @@ lassopmm <-
         )
       )
     } else if (all(!strata_vars %in% names(source)) &&
-               !is.null(strata_vars) &&
-               !is.na(strata_vars)) {
+      !is.null(strata_vars) &&
+      !is.na(strata_vars)) {
       warning(
         paste0(
           "Variable(s) '",
@@ -99,9 +101,9 @@ lassopmm <-
       )
     }
     if (any(!cluster_vars %in% names(source)) &&
-        !all(!cluster_vars %in% names(source)) &&
-        !is.null(cluster_vars) &&
-        !is.na(cluster_vars)) {
+      !all(!cluster_vars %in% names(source)) &&
+      !is.null(cluster_vars) &&
+      !is.na(cluster_vars)) {
       warning(
         paste0(
           "Variable(s) '",
@@ -113,8 +115,8 @@ lassopmm <-
         )
       )
     } else if (all(!cluster_vars %in% names(source)) &&
-               !is.null(cluster_vars) &&
-               !is.na(cluster_vars)) {
+      !is.null(cluster_vars) &&
+      !is.na(cluster_vars)) {
       warning(
         paste0(
           "Variable(s) '",
@@ -158,19 +160,31 @@ lassopmm <-
       boot_perm_vector <- convert_bootstrap_permutation(force_boot)
     }
 
+    if (is.null(updateProgress)) {
+      updateProgress <- function(detail = NULL)
+        return(NULL)
+    }
+
     # Running all the analysis on every permutation
     all_boots <-
       boot_perm_vector %>%
-      purrr::map(~ estimate_matches(
-        source_x_mat = x_mat[.x, ],
-        source_y_mat = y_mat[.x, ],
-        source_w_mat = w_mat[.x, ],
-        target_x_mat = x1_mat,
-        reduced = reduced,
-        n_near = n_near,
-        n_folds = n_folds,
-        force_lambda = force_lambda
-      ))
+      purrr::map2(.x = .,
+                  .y = seq_along(.),
+                  .f = function(.x, .y) {
+        updateProgress(detail = paste0("Bootstrap iteration ", .y, "."))
+        estimate_matches(
+          source_x_mat = x_mat[.x, ],
+          source_y_mat = y_mat[.x, ],
+          source_w_mat = w_mat[.x, ],
+          target_x_mat = x1_mat,
+          reduced = reduced,
+          n_near = n_near,
+          n_folds = n_folds,
+          force_lambda = force_lambda
+        )
+      })
+
+    updateProgress(detail = "Matching observations")
 
     # constructing dataframe, where all bootstraps are matched to the actual observations
     all_matches <-

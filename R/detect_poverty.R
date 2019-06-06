@@ -21,7 +21,7 @@ detect_poverty <- function(.data, income_var, suffix = "", pov_line_1, pov_line_
   vul <- stringr::str_interp("2vul_${suffix}")
   mid <- stringr::str_interp("3mid_${suffix}")
 
-  if (is_null(pov_line_2)) {
+  if (purrr::is_null(pov_line_2)) {
     .data %>%
       dplyr::mutate(
         !!poor := dplyr::case_when(!!income_var < pov_line_1 ~ 1,
