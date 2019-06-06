@@ -89,7 +89,13 @@
       <a href="../articles/how_it_works.html">How it works in steps</a>
     </li>
     <li>
+      <a href="../articles/lassopmm_shiny_app.html">Shiny app with lassopmm functionality</a>
+    </li>
+    <li>
       <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_script_lassopmm.html">R script for lassopmm</a>
     </li>
     <li>
       <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
@@ -203,7 +209,9 @@ want to switch to the linear regression.</p></td>
 <span class='no'>XX1</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/matrix'>as.matrix</a></span>(<span class='no'>mtcars</span>[<span class='fl'>1</span>:<span class='fl'>10</span>, !<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/names'>names</a></span>(<span class='no'>mtcars</span>) <span class='kw'>%in%</span> <span class='st'>"hp"</span>])
 
 <span class='co'># Running simple estimation and returning</span>
-<span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'>estimate_matches</span>(<span class='kw'>source_x_mat</span> <span class='kw'>=</span> <span class='no'>XX</span>, <span class='kw'>source_y_mat</span> <span class='kw'>=</span> <span class='no'>YY</span>, <span class='kw'>source_w_mat</span> <span class='kw'>=</span> <span class='no'>WW</span>, <span class='kw'>target_x_mat</span> <span class='kw'>=</span> <span class='no'>XX1</span>, <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>5</span>)
+<span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'>estimate_matches</span>(<span class='kw'>source_x_mat</span> <span class='kw'>=</span> <span class='no'>XX</span>, <span class='kw'>source_y_mat</span> <span class='kw'>=</span> <span class='no'>YY</span>,
+                      <span class='kw'>source_w_mat</span> <span class='kw'>=</span> <span class='no'>WW</span>, <span class='kw'>target_x_mat</span> <span class='kw'>=</span> <span class='no'>XX1</span>,
+                      <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>5</span>)
 
 <span class='co'># Extract regression coefficients</span>
 <span class='no'>a</span>$<span class='no'>fit</span> <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/coef'>coef</a></span>()</div><div class='output co'>#&gt; 11 x 1 sparse Matrix of class "dgCMatrix"

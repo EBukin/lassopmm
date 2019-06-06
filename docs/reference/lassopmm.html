@@ -32,7 +32,7 @@
 
 <meta property="og:title" content="Impute data to from the period 0 dataframe to the period 1 using "lassopmm" logic. — lassopmm" />
 
-<meta property="og:description" content="The package provides" />
+<meta property="og:description" content="The package lassopmm" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -89,7 +89,13 @@
       <a href="../articles/how_it_works.html">How it works in steps</a>
     </li>
     <li>
+      <a href="../articles/lassopmm_shiny_app.html">Shiny app with lassopmm functionality</a>
+    </li>
+    <li>
       <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_script_lassopmm.html">R script for lassopmm</a>
     </li>
     <li>
       <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
@@ -119,14 +125,14 @@
 
     <div class="ref-description">
     
-    <p>The package provides</p>
+    <p>The package lassopmm</p>
     
     </div>
 
     <pre class="usage"><span class='fu'>lassopmm</span>(<span class='no'>source</span>, <span class='no'>target</span>, <span class='no'>dep_var</span>, <span class='no'>indep_var</span>, <span class='kw'>weight_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>extra_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>n_boot</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>group_boot_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>force_boot</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>force_lambda</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>n_folds</span> <span class='kw'>=</span> <span class='fl'>10</span>,
-  <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+  <span class='kw'>extra_var</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>strata_vars</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>cluster_vars</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>n_boot</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>force_boot</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>force_lambda</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>n_folds</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>reduced</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>updateProgress</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -153,11 +159,19 @@ Default is `NULL`, when `NULL` equall weights of 1 for each obesrcation
 are assumed.</p></td>
     </tr>
     <tr>
-      <th>extra_var, group_boot_var</th>
+      <th>extra_var</th>
       <td><p>character vectors. Could be <code>NULL</code>, contain
-one element or a vector of multiple lements. <code>extra_var</code> represents
+one element or a vector of multiple elements. <code>extra_var</code> represents
 names of the variable, which should be joint from the <code>source</code> data to
 the <code>target</code> data based on the match by the dependent variable <code>dep_var</code>.</p></td>
+    </tr>
+    <tr>
+      <th>strata_vars, cluster_vars</th>
+      <td><p>character vectors. Could be <code>NULL</code>, contain
+one element or a vector of multiple elements. <code>strata_vars</code> exist for
+using stratified sampling in the bootstrapping process. <code>cluster_vars</code>
+used for clastered sampling in the bootstrapping process. Any combinations
+of variables could be used.</p></td>
     </tr>
     <tr>
       <th>n_near</th>
@@ -191,11 +205,11 @@ want to switch to the linear regression.</p></td>
       <th>reduced</th>
       <td><p>if TRUE terurns reduced outpur without specific regression details.</p></td>
     </tr>
+    <tr>
+      <th>updateProgress</th>
+      <td><p>function that updates the progress bars in the shiny app.</p></td>
+    </tr>
     </table>
-    
-    <h2 class="hasAnchor" id="functions"><a class="anchor" href="#functions"></a>Functions</h2>
-
-    
     
 
   </div>
@@ -203,9 +217,7 @@ want to switch to the linear regression.</p></td>
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#functions">Functions</a></li>
-          </ul>
+                </ul>
 
   </div>
 </div>

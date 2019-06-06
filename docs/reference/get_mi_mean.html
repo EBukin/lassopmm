@@ -89,7 +89,13 @@
       <a href="../articles/how_it_works.html">How it works in steps</a>
     </li>
     <li>
+      <a href="../articles/lassopmm_shiny_app.html">Shiny app with lassopmm functionality</a>
+    </li>
+    <li>
       <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_script_lassopmm.html">R script for lassopmm</a>
     </li>
     <li>
       <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
@@ -179,7 +185,7 @@ simplu n-first observations is used.</p></td>
     <span class='kw'>dep_var</span> <span class='kw'>=</span> <span class='no'>dep</span>,
     <span class='kw'>indep_var</span> <span class='kw'>=</span> <span class='no'>indep</span>,
     <span class='kw'>weight_var</span> <span class='kw'>=</span> <span class='no'>weight</span>,
-    <span class='kw'>group_boot_var</span> <span class='kw'>=</span> <span class='no'>bt_groups</span>,
+    <span class='kw'>strata_vars</span> <span class='kw'>=</span> <span class='no'>bt_groups</span>,
     <span class='kw'>extra_var</span> <span class='kw'>=</span> <span class='no'>extrar</span>,
     <span class='kw'>n_boot</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='co'># Numebr of bootstrap iterations</span>
     <span class='kw'>n_near</span> <span class='kw'>=</span> <span class='fl'>1</span>)
@@ -188,14 +194,14 @@ simplu n-first observations is used.</p></td>
 <span class='fu'>get_mi_mean</span>(<span class='no'>imputation</span>, <span class='kw'>stat_var</span> <span class='kw'>=</span> <span class='st'>"price_source"</span>, <span class='kw'>use_random</span> <span class='kw'>=</span> <span class='no'>F</span>)</div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 1 x 15</span><span>
 #&gt;   variable estimate std.error statistic    df p.value `2.5 %` `97.5 %`    riv
 #&gt;   </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>       </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #555555;'>1</span><span> price_s~    </span><span style='text-decoration: underline;'>6</span><span>127.     </span><span style='text-decoration: underline;'>1</span><span>344.      4.56  4.35 0.008</span><span style='text-decoration: underline;'>48</span><span>   </span><span style='text-decoration: underline;'>2</span><span>512.    </span><span style='text-decoration: underline;'>9</span><span>743. 0.067</span><span style='text-decoration: underline;'>6</span><span>
+#&gt; </span><span style='color: #555555;'>1</span><span> price_s~    </span><span style='text-decoration: underline;'>6</span><span>394.     </span><span style='text-decoration: underline;'>1</span><span>240.      5.16  4.52 0.004</span><span style='text-decoration: underline;'>79</span><span>   </span><span style='text-decoration: underline;'>3</span><span>102.    </span><span style='text-decoration: underline;'>9</span><span>687. 0.031</span><span style='text-decoration: underline;'>4</span><span>
 #&gt; </span><span style='color: #555555;'># ... with 6 more variables: lambda </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, fmi </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, ubar </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, b </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>,
 #&gt; #   t </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, dfcom </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span></div><div class='input'>
 <span class='co'># Same by with weights in means</span>
 <span class='fu'>get_mi_mean</span>(<span class='no'>imputation</span>, <span class='kw'>stat_var</span> <span class='kw'>=</span> <span class='st'>"price_source"</span>, <span class='kw'>weight_var</span> <span class='kw'>=</span> <span class='st'>"weight"</span>)</div><div class='output co'>#&gt; </span><span style='color: #555555;'># A tibble: 1 x 15</span><span>
-#&gt;   variable estimate std.error statistic    df p.value `2.5 %` `97.5 %`   riv
-#&gt;   </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>       </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #555555;'>1</span><span> price_s~    </span><span style='text-decoration: underline;'>6</span><span>927.     </span><span style='text-decoration: underline;'>1</span><span>615.      4.29  4.13  0.011</span><span style='text-decoration: underline;'>9</span><span>   </span><span style='text-decoration: underline;'>2</span><span>499.   </span><span style='text-decoration: underline;'>11</span><span>356. 0.117
+#&gt;   variable estimate std.error statistic    df p.value `2.5 %` `97.5 %`    riv
+#&gt;   </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>       </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
+#&gt; </span><span style='color: #555555;'>1</span><span> price_s~    </span><span style='text-decoration: underline;'>7</span><span>089.     </span><span style='text-decoration: underline;'>1</span><span>456.      4.87  4.60 0.005</span><span style='text-decoration: underline;'>75</span><span>   </span><span style='text-decoration: underline;'>3</span><span>245.   </span><span style='text-decoration: underline;'>10</span><span>932. 0.015</span><span style='text-decoration: underline;'>1</span><span>
 #&gt; </span><span style='color: #555555;'># ... with 6 more variables: lambda </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, fmi </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, ubar </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, b </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>,
 #&gt; #   t </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, dfcom </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span></div><div class='input'>
 </div></span></pre>

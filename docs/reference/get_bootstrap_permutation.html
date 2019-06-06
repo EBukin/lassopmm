@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Generates a list of permutation vectors for bootsrapping — get_bootstrap_permutation • lassopmm</title>
+<title>Generates a list of permutation vectors for bootsrapping (old version not used) — get_bootstrap_permutation • lassopmm</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Generates a list of permutation vectors for bootsrapping — get_bootstrap_permutation" />
+<meta property="og:title" content="Generates a list of permutation vectors for bootsrapping (old version not used) — get_bootstrap_permutation" />
 
-<meta property="og:description" content="Generates a list of permutation vectors for bootsrapping" />
+<meta property="og:description" content="Generates a list of permutation vectors for bootsrapping (old version not used)" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -89,7 +89,13 @@
       <a href="../articles/how_it_works.html">How it works in steps</a>
     </li>
     <li>
+      <a href="../articles/lassopmm_shiny_app.html">Shiny app with lassopmm functionality</a>
+    </li>
+    <li>
       <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_script_lassopmm.html">R script for lassopmm</a>
     </li>
     <li>
       <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
@@ -112,24 +118,24 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Generates a list of permutation vectors for bootsrapping</h1>
+    <h1>Generates a list of permutation vectors for bootsrapping (old version not used)</h1>
     
     <div class="hidden name"><code>get_bootstrap_permutation.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Generates a list of permutation vectors for bootsrapping</p>
+    <p>Generates a list of permutation vectors for bootsrapping (old version not used)</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>get_bootstrap_permutation</span>(<span class='no'>data</span>, <span class='no'>n_boot</span>)</pre>
+    <pre class="usage"><span class='fu'>get_bootstrap_permutation</span>(<span class='no'>.data</span>, <span class='kw'>n_boot</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>data</th>
+      <th>.data</th>
       <td><p>dataframe containing two columns <code>group</code> and <code>id</code>.</p></td>
     </tr>
     <tr>
@@ -143,27 +149,195 @@ order as source data.</p></td>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>dplyr</span>)
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>tibble</span>)
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>dplyr</span>)
 <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>purrr</span>)
-<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>tidyr</span>)</div><div class='output co'>#&gt; <span class='message'></span>
-#&gt; <span class='message'>Attaching package: 'tidyr'</span></div><div class='output co'>#&gt; <span class='message'>The following object is masked from 'package:Matrix':</span>
-#&gt; <span class='message'></span>
-#&gt; <span class='message'>    expand</span></div><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>glmnet</span>)
 <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>lassopmm</span>)
 
-<span class='no'>df</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>tibble</span><span class='kw ns'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span>(<span class='kw'>id</span> <span class='kw'>=</span> <span class='fl'>1</span>:<span class='fl'>30</span>, <span class='kw'>group</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/sort'>sort</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>1</span>:<span class='fl'>3</span>, <span class='fl'>10</span>)))
-<span class='fu'>get_bootstrap_permutation</span>(<span class='no'>df</span>, <span class='fl'>3</span>)</div><div class='output co'>#&gt; [[1]]
-#&gt;  [1]  8  5  6  2  1  7  6 10  9  1 18 11 12 19 16 18 14 20 15 14 27 22 27 29 29
-#&gt; [26] 29 23 26 29 24
+<span class='co'># Generating sample data</span>
+<span class='no'>n</span> <span class='kw'>&lt;-</span> <span class='fl'>100</span>
+<span class='no'>sa_df</span> <span class='kw'>&lt;-</span>
+  <span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span>(
+    <span class='kw'>ids</span> <span class='kw'>=</span> <span class='fl'>1</span>:<span class='no'>n</span>,
+    <span class='kw'>.strata</span> <span class='kw'>=</span> <span class='kw pkg'>statar</span><span class='kw ns'>::</span><span class='fu'><a href='https://www.rdocumentation.org/packages/statar/topics/xtile'>xtile</a></span>(<span class='no'>ids</span>, <span class='fl'>10</span>),
+    <span class='kw'>.cluster</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(
+      <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>5</span>, <span class='no'>n</span> * <span class='fl'>0.1</span>),
+      <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>2</span>, <span class='no'>n</span> * <span class='fl'>0.3</span>),
+      <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>4</span>, <span class='no'>n</span> * <span class='fl'>0.4</span>),
+      <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>3</span>, <span class='no'>n</span> * <span class='fl'>0.05</span>),
+      <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>1</span>, <span class='no'>n</span> * <span class='fl'>0.15</span>)
+    )
+  )
+
+<span class='co'># Dataset, where cluster equall to strata</span>
+<span class='no'>sa_df1</span> <span class='kw'>&lt;-</span> <span class='no'>sa_df</span> <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>.cluster</span> <span class='kw'>=</span> <span class='no'>.strata</span>)
+
+<span class='co'># Dataset, where cluster equall to one number</span>
+<span class='no'>sa_df2</span> <span class='kw'>&lt;-</span> <span class='no'>sa_df</span> <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>.cluster</span> <span class='kw'>=</span> <span class='fl'>0</span>)
+
+<span class='co'># Dataset, where strata equall to one number</span>
+<span class='no'>sa_df3</span> <span class='kw'>&lt;-</span> <span class='no'>sa_df</span> <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>.strata</span> <span class='kw'>=</span> <span class='fl'>1</span>)
+
+<span class='co'># Function for generating cross-tabulation statistics</span>
+<span class='no'>my_table</span> <span class='kw'>&lt;-</span> <span class='kw'>function</span>(<span class='no'>x</span>, <span class='no'>y</span>) {
+  <span class='no'>a</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/table'>table</a></span>(<span class='no'>x</span>, <span class='no'>y</span>)
+  <span class='no'>b</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/cbind'>cbind</a></span>(<span class='no'>a</span>, <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/t'>t</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/t'>t</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/margin.table'>margin.table</a></span>(<span class='no'>a</span>, <span class='fl'>1</span>))))
+  <span class='no'>cc</span> <span class='kw'>&lt;-</span>
+    <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/margin.table'>margin.table</a></span>(<span class='no'>a</span>, <span class='fl'>2</span>) <span class='kw'>%&gt;%</span>
+    <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/matrix'>as.matrix</a></span>() <span class='kw'>%&gt;%</span>
+    <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/t'>t</a></span>() <span class='kw'>%&gt;%</span>
+    <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/cbind'>cbind</a></span>(<span class='no'>.</span>, <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/sum'>sum</a></span>(<span class='no'>.</span>))
+  <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/cbind'>rbind</a></span>(<span class='no'>b</span>, <span class='no'>cc</span>)
+}
+
+<span class='co'># Example of simple bootstrapping with clusters and stratas</span>
+<span class='co'># Original data strcructure</span>
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/with'>with</a></span>(<span class='no'>sa_df</span>, <span class='fu'>my_table</span>(<span class='no'>.cluster</span>, <span class='no'>.strata</span>))</div><div class='output co'>#&gt;    1  2  3 4  5  6  7  8  9 10    
+#&gt; 1  0  0  0 0  0  0  0  0  5 10  15
+#&gt; 2  0 10 11 9  0  0  0  0  0  0  30
+#&gt; 3  0  0  0 0  0  0  0  0  5  0   5
+#&gt; 4  0  0  0 0 10 10 10 10  0  0  40
+#&gt; 5 10  0  0 0  0  0  0  0  0  0  10
+#&gt;   10 10 11 9 10 10 10 10 10 10 100</div><div class='input'><span class='co'># Structure of the three repetedly sampled datasets</span>
+<span class='fu'>get_bootstrap_permutation</span>(<span class='no'>sa_df</span>, <span class='fl'>3</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span>(<span class='kw'>ids</span> <span class='kw'>=</span> <span class='no'>.x</span>) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/join.html'>left_join</a></span>(<span class='no'>sa_df</span>, <span class='st'>"ids"</span>)) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/with'>with</a></span>(<span class='no'>.x</span>, <span class='fu'>my_table</span>(<span class='no'>.cluster</span>, <span class='no'>.strata</span>)))</div><div class='output co'>#&gt; [[1]]
+#&gt;    1  5  6  7  8 9    
+#&gt; 3  0  0  0  0  0 5   5
+#&gt; 4  0 20 20 20 20 0  80
+#&gt; 5 20  0  0  0  0 0  20
+#&gt;   20 20 20 20 20 5 105
 #&gt; 
 #&gt; [[2]]
-#&gt;  [1]  8  8  9 10  2 10  7  1  5  3 17 12 17 18 17 11 17 17 15 16 27 29 28 24 25
-#&gt; [26] 22 25 26 21 28
+#&gt;    2  3 4  5  6  7  8  9    
+#&gt; 2 10 11 9  0  0  0  0  0  30
+#&gt; 3  0  0 0  0  0  0  0 10  10
+#&gt; 4  0  0 0 20 20 20 20  0  80
+#&gt;   10 11 9 20 20 20 20 10 120
 #&gt; 
 #&gt; [[3]]
-#&gt;  [1]  6  7  2 10  7  6  3 10  2  1 18 17 13 20 12 17 13 18 19 19 29 21 28 29 27
-#&gt; [26] 25 30 27 25 29
-#&gt; </div></pre>
+#&gt;    1  2  3 4  5  6  7  8    
+#&gt; 2  0 10 11 9  0  0  0  0  30
+#&gt; 4  0  0  0 0 20 20 20 20  80
+#&gt; 5 20  0  0 0  0  0  0  0  20
+#&gt;   20 10 11 9 20 20 20 20 130
+#&gt; </div><div class='input'>
+<span class='co'># Example of sampling with clusters and stratas,</span>
+<span class='co'># where data contains clusters equall to stratas.</span>
+<span class='co'># This is an equivalent of the only clustered sampling</span>
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/with'>with</a></span>(<span class='no'>sa_df1</span>, <span class='fu'>my_table</span>(<span class='no'>.cluster</span>, <span class='no'>.strata</span>))</div><div class='output co'>#&gt;     1  2  3 4  5  6  7  8  9 10    
+#&gt; 1  10  0  0 0  0  0  0  0  0  0  10
+#&gt; 2   0 10  0 0  0  0  0  0  0  0  10
+#&gt; 3   0  0 11 0  0  0  0  0  0  0  11
+#&gt; 4   0  0  0 9  0  0  0  0  0  0   9
+#&gt; 5   0  0  0 0 10  0  0  0  0  0  10
+#&gt; 6   0  0  0 0  0 10  0  0  0  0  10
+#&gt; 7   0  0  0 0  0  0 10  0  0  0  10
+#&gt; 8   0  0  0 0  0  0  0 10  0  0  10
+#&gt; 9   0  0  0 0  0  0  0  0 10  0  10
+#&gt; 10  0  0  0 0  0  0  0  0  0 10  10
+#&gt;    10 10 11 9 10 10 10 10 10 10 100</div><div class='input'><span class='co'># Structure of the three repetedly sampled datasets</span>
+<span class='fu'>get_bootstrap_permutation</span>(<span class='no'>sa_df1</span>, <span class='fl'>3</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span>(<span class='kw'>ids</span> <span class='kw'>=</span> <span class='no'>.x</span>) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/join.html'>left_join</a></span>(<span class='no'>sa_df1</span>, <span class='st'>"ids"</span>)) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/with'>with</a></span>(<span class='no'>.x</span>, <span class='fu'>my_table</span>(<span class='no'>.cluster</span>, <span class='no'>.strata</span>)))</div><div class='output co'>#&gt; [[1]]
+#&gt;    1  2  3 4  5  7  8  9    
+#&gt; 1 10  0  0 0  0  0  0  0  10
+#&gt; 2  0 10  0 0  0  0  0  0  10
+#&gt; 3  0  0 11 0  0  0  0  0  11
+#&gt; 4  0  0  0 9  0  0  0  0   9
+#&gt; 5  0  0  0 0 10  0  0  0  10
+#&gt; 7  0  0  0 0  0 10  0  0  10
+#&gt; 8  0  0  0 0  0  0 30  0  30
+#&gt; 9  0  0  0 0  0  0  0 10  10
+#&gt;   10 10 11 9 10 10 30 10 100
+#&gt; 
+#&gt; [[2]]
+#&gt;    2 4  7  8  9   
+#&gt; 2 10 0  0  0  0 10
+#&gt; 4  0 9  0  0  0  9
+#&gt; 7  0 0 30  0  0 30
+#&gt; 8  0 0  0 20  0 20
+#&gt; 9  0 0  0  0 30 30
+#&gt;   10 9 30 20 30 99
+#&gt; 
+#&gt; [[3]]
+#&gt;     3 4  5  8  9 10    
+#&gt; 3  11 0  0  0  0  0  11
+#&gt; 4   0 9  0  0  0  0   9
+#&gt; 5   0 0 20  0  0  0  20
+#&gt; 8   0 0  0 20  0  0  20
+#&gt; 9   0 0  0  0 10  0  10
+#&gt; 10  0 0  0  0  0 30  30
+#&gt;    11 9 20 20 10 30 100
+#&gt; </div><div class='input'>
+<span class='co'># Example of sampling with clusters and stratas,</span>
+<span class='co'># where data contains only one cluster equall to 0</span>
+<span class='co'># This is an equivalent of the only stratified sampling</span>
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/with'>with</a></span>(<span class='no'>sa_df2</span>, <span class='fu'>my_table</span>(<span class='no'>.cluster</span>, <span class='no'>.strata</span>))</div><div class='output co'>#&gt;    1  2  3 4  5  6  7  8  9 10    
+#&gt; 0 10 10 11 9 10 10 10 10 10 10 100
+#&gt;   10 10 11 9 10 10 10 10 10 10 100</div><div class='input'><span class='co'># Structure of the three repetedly sampled datasets</span>
+<span class='fu'>get_bootstrap_permutation</span>(<span class='no'>sa_df2</span>, <span class='fl'>3</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span>(<span class='kw'>ids</span> <span class='kw'>=</span> <span class='no'>.x</span>) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/join.html'>left_join</a></span>(<span class='no'>sa_df2</span>, <span class='st'>"ids"</span>)) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/with'>with</a></span>(<span class='no'>.x</span>, <span class='fu'>my_table</span>(<span class='no'>.cluster</span>, <span class='no'>.strata</span>)))</div><div class='output co'>#&gt; [[1]]
+#&gt;    1  2  3 4  5  6  7  8  9 10    
+#&gt; 0 10 10 11 9 10 10 10 10 10 10 100
+#&gt;   10 10 11 9 10 10 10 10 10 10 100
+#&gt; 
+#&gt; [[2]]
+#&gt;    1  2  3 4  5  6  7  8  9 10    
+#&gt; 0 10 10 11 9 10 10 10 10 10 10 100
+#&gt;   10 10 11 9 10 10 10 10 10 10 100
+#&gt; 
+#&gt; [[3]]
+#&gt;    1  2  3 4  5  6  7  8  9 10    
+#&gt; 0 10 10 11 9 10 10 10 10 10 10 100
+#&gt;   10 10 11 9 10 10 10 10 10 10 100
+#&gt; </div><div class='input'>
+<span class='co'># Example of sampling with clusters and stratas,</span>
+<span class='co'># where data contains only one strata equall to 0</span>
+<span class='co'># This is an equivalent of the only clustered sampling</span>
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/with'>with</a></span>(<span class='no'>sa_df3</span>, <span class='fu'>my_table</span>(<span class='no'>.cluster</span>, <span class='no'>.strata</span>))</div><div class='output co'>#&gt;     1    
+#&gt; 1  15  15
+#&gt; 2  30  30
+#&gt; 3   5   5
+#&gt; 4  40  40
+#&gt; 5  10  10
+#&gt;   100 100</div><div class='input'><span class='co'># Structure of the three repetedly sampled datasets</span>
+<span class='fu'>get_bootstrap_permutation</span>(<span class='no'>sa_df3</span>, <span class='fl'>3</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span>(<span class='kw'>ids</span> <span class='kw'>=</span> <span class='no'>.x</span>) <span class='kw'>%&gt;%</span> <span class='fu'><a href='https://dplyr.tidyverse.org/reference/join.html'>left_join</a></span>(<span class='no'>sa_df3</span>, <span class='st'>"ids"</span>)) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/with'>with</a></span>(<span class='no'>.x</span>, <span class='fu'>my_table</span>(<span class='no'>.cluster</span>, <span class='no'>.strata</span>)))</div><div class='output co'>#&gt; [[1]]
+#&gt;    1   
+#&gt; 1 30 30
+#&gt; 2 30 30
+#&gt; 3  5  5
+#&gt; 5 10 10
+#&gt;   75 75
+#&gt; 
+#&gt; [[2]]
+#&gt;    1   
+#&gt; 1 15 15
+#&gt; 3 15 15
+#&gt; 4 40 40
+#&gt;   70 70
+#&gt; 
+#&gt; [[3]]
+#&gt;     1    
+#&gt; 1  15  15
+#&gt; 3  10  10
+#&gt; 4  80  80
+#&gt;   105 105
+#&gt; </div><div class='input'>
+<span class='co'># Comparing old bootstrapping logic with the new one</span>
+<span class='no'>df</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>tibble</span><span class='kw ns'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></span>(<span class='kw'>id</span> <span class='kw'>=</span> <span class='fl'>1</span>:<span class='fl'>30</span>, <span class='kw'>group</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/sort'>sort</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/rep'>rep</a></span>(<span class='fl'>1</span>:<span class='fl'>3</span>, <span class='fl'>10</span>))) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span>(<span class='kw'>ids</span> <span class='kw'>=</span> <span class='no'>id</span>, <span class='kw'>.strata</span> <span class='kw'>=</span> <span class='no'>group</span>, <span class='kw'>.cluster</span> <span class='kw'>=</span> <span class='fl'>1</span>)
+
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/Random'>set.seed</a></span>(<span class='fl'>1</span>)
+<span class='no'>old</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='get_bootstrap_permutation_old.html'>get_bootstrap_permutation_old</a></span>(<span class='no'>df</span>, <span class='fl'>3</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/sort'>sort</a></span>(<span class='no'>.x</span>))
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/Random'>set.seed</a></span>(<span class='fl'>1</span>)
+<span class='no'>new</span> <span class='kw'>&lt;-</span> <span class='fu'>get_bootstrap_permutation</span>(<span class='no'>df</span>, <span class='fl'>3</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/sort'>sort</a></span>(<span class='no'>.x</span>))
+<span class='fu'><a href='https://dplyr.tidyverse.org/reference/all_equal.html'>all_equal</a></span>(<span class='no'>old</span>, <span class='no'>new</span>)</div><div class='output co'>#&gt; [1] TRUE</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>

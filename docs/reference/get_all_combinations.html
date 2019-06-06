@@ -89,7 +89,13 @@
       <a href="../articles/how_it_works.html">How it works in steps</a>
     </li>
     <li>
+      <a href="../articles/lassopmm_shiny_app.html">Shiny app with lassopmm functionality</a>
+    </li>
+    <li>
       <a href="../articles/mice_vs_mi.html">Multiple imputation statistics in STATA and R</a>
+    </li>
+    <li>
+      <a href="../articles/r_script_lassopmm.html">R script for lassopmm</a>
     </li>
     <li>
       <a href="../articles/r_vs_stata_lassopmm.html">R versus STATA 'lassopmm'</a>
@@ -123,7 +129,8 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>get_all_combinations</span>(<span class='no'>.data</span>, <span class='no'>new_var</span>)</pre>
+    <pre class="usage"><span class='fu'>get_all_combinations</span>(<span class='no'>.data</span>, <span class='no'>new_var</span>, <span class='kw'>clean_name</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>clean_expr</span> <span class='kw'>=</span> <span class='st'>"_.{1,}$"</span>, <span class='kw'>connector</span> <span class='kw'>=</span> <span class='st'>"_"</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -136,6 +143,11 @@
       <th>new_var</th>
       <td><p>name of the new categorical variable to create for
 representing all combinations of the previous dummy variables.</p></td>
+    </tr>
+    <tr>
+      <th>clean_name, clean_expr, connector</th>
+      <td><p>technical inputs used for modifying
+resulting variables names.</p></td>
     </tr>
     </table>
     
