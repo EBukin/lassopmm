@@ -4,7 +4,8 @@
 \alias{get_all_combinations}
 \title{Convert a table of dummy variables to a table of its unique combinations}
 \usage{
-get_all_combinations(.data, new_var)
+get_all_combinations(.data, new_var, clean_name = TRUE,
+  clean_expr = "_.{1,}$", connector = "_")
 }
 \arguments{
 \item{.data}{data frame with only dummy variable to be converted}

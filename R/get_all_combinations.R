@@ -5,6 +5,8 @@
 #' @param .data data frame with only dummy variable to be converted
 #' @param new_var name of the new categorical variable to create for
 #'        representing all combinations of the previous dummy variables.
+#' @param clean_name,clean_expr,connector technical inputs used for modifying
+#'        resulting variables names.
 #' @export
 #' @examples
 #' library(dplyr)

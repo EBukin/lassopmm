@@ -9,7 +9,7 @@
 lassopmm(source, target, dep_var, indep_var, weight_var = NULL,
   extra_var = NULL, strata_vars = NULL, cluster_vars = NULL,
   n_near = 10, n_boot = 5, force_boot = NULL, force_lambda = NULL,
-  n_folds = 10, reduced = TRUE)
+  n_folds = 10, reduced = TRUE, updateProgress = NULL)
 }
 \arguments{
 \item{source, target}{dataframes with the period 0 and period 1 data
@@ -55,6 +55,8 @@ want to switch to the linear regression.}
 \item{n_folds}{number of folds for cross-validation}
 
 \item{reduced}{if TRUE terurns reduced outpur without specific regression details.}
+
+\item{updateProgress}{function that updates the progress bars in the shiny app.}
 }
 \description{
 The package lassopmm
