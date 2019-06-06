@@ -62,7 +62,7 @@ imputation <-
               source = p_0_exmple, 
               target = p_1_exmple,
               dep_var = dep, indep_var = indep, weight_var = weight,
-              group_boot_var = bt_groups,
+              cluster_vars = bt_groups,
               extra_var = extrar,
               n_boot = 5, # Numebr of bootstrap iterations
               n_near = 1)
@@ -109,4 +109,7 @@ summary(est) # returns mean and standard error for pooled multipuly imputed data
 est          # returns additional data 
 ```
 
+## R script for using lassopmm
 
+```{r, code = readLines("./vignettes/simple_lassopmm_script.R"), eval=FALSE}
+```

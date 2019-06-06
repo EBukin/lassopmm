@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# syntheticpanel
+# lassopmm
 
 <!-- badges: start -->
 
@@ -9,17 +9,17 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 <!-- badges: end -->
 
-The goal of syntheticpanel is to replicate functionality of the STATA
-program “lassopmm”.
+The goal of lassopmm is to replicate functionality of the STATA program
+“lassopmm”.
 
 ## Installation
 
 You can install development version from
-[GitHub](https://github.com/EBukin/syntheticpanel) with:
+[GitHub](https://github.com/EBukin/lassopmm) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("EBukin/syntheticpanel")
+devtools::install_github("EBukin/lassopmm")
 ```
 
 ## Example of the basic use
@@ -41,7 +41,7 @@ library(dplyr)
 #> 
 #>     intersect, setdiff, setequal, union
 library(purrr)
-library(syntheticpanel)
+library(lassopmm)
 
 glimpse(p_0_exmple)       # help(p_0_exmple)
 #> Observations: 74
@@ -106,7 +106,7 @@ imputation <-
               source = p_0_exmple, 
               target = p_1_exmple,
               dep_var = dep, indep_var = indep, weight_var = weight,
-              group_boot_var = bt_groups,
+              cluster_vars = bt_groups,
               extra_var = extrar,
               n_boot = 5, # Numebr of bootstrap iterations
               n_near = 1)
@@ -161,11 +161,11 @@ glimpse(imputation)
 #> $ numobs              <dbl> 65, 71, 32, 24, 49, 23, 27, 65, 71, 32, 24...
 #> $ samples             <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
 #> $ numobs11            <dbl> 75, 76, 77, 78, 79, 80, 81, 75, 76, 77, 78...
-#> $ target_y_hat        <dbl> NA, NA, NA, NA, NA, NA, NA, 5137.791, 5504...
-#> $ source_id           <chr> NA, NA, NA, NA, NA, NA, NA, "65", "39", "3...
-#> $ source_y_hat        <dbl> NA, NA, NA, NA, NA, NA, NA, 5137.791, 5410...
-#> $ price_source        <dbl> NA, NA, NA, NA, NA, NA, NA, 3895, 4181, 45...
-#> $ displacement_source <dbl> NA, NA, NA, NA, NA, NA, NA, 79, 231, 250, ...
+#> $ target_y_hat        <dbl> NA, NA, NA, NA, NA, NA, NA, 4599.3449, 374...
+#> $ source_id           <chr> NA, NA, NA, NA, NA, NA, NA, "65", "71", "1...
+#> $ source_y_hat        <dbl> NA, NA, NA, NA, NA, NA, NA, 4599.345, 3744...
+#> $ price_source        <dbl> NA, NA, NA, NA, NA, NA, NA, 3895, 5397, 39...
+#> $ displacement_source <dbl> NA, NA, NA, NA, NA, NA, NA, 79, 90, 250, 1...
 
 # Summary of the number of observations per one ID
 # 6 in total meaning that 1 observation stands for original
@@ -233,12 +233,116 @@ mi_test <- as.mids(imputation) # Converting imputated data to the "mids" object
 mean_stats <- with(mi_test, lm(price_source ~ 1))
 est <- pool(mean_stats) # poolling results 
 summary(est) # returns mean and standard error for pooled multipuly imputed data.
-#>             estimate std.error statistic      df    p.value
-#> (Intercept) 6211.229   1361.14  4.563253 4.60578 0.00737454
+#>             estimate std.error statistic       df    p.value
+#> (Intercept) 6548.229   1637.87  3.998015 2.795263 0.03194716
 est          # returns additional data 
 #> Class: mipo    m = 5 
-#>             estimate    ubar       b       t dfcom      df        riv
-#> (Intercept) 6211.229 1828879 19853.5 1852703     6 4.60578 0.01302667
-#>                 lambda       fmi
-#> (Intercept) 0.01285915 0.2724356
+#>             estimate    ubar        b       t dfcom       df       riv
+#> (Intercept) 6548.229 1753775 774035.4 2682618     6 2.795263 0.5296246
+#>                lambda       fmi
+#> (Intercept) 0.3462448 0.5718619
+```
+
+## R script for using lassopmm
+
+``` r
+# Simple R script for running lassopmm and estimating mobility
+
+
+# Loading packages
+library(lassopmm)
+library(haven)      # For loading data saved in STATA
+library(dplyr)      # For manipulating data
+library(purrr)   # For manipulating data
+
+# Loading data
+source_data <- read_dta("../eduard-stata/ARG/cross 14.dtaweight.dta")
+target_data <- read_dta("../eduard-stata/ARG/cross 13.dtaweight.dta")
+
+
+# Specifying relevant variables
+
+# Dependent variable
+dependent_var <- "lipcf"
+
+# Independent variables. Make sure that they are specified as shown below.
+independent_vars <-
+  c("hombre", "aedu", "miembros", "miembros2",
+    "region1", "region2", "region3", "region4", "region5", "region6",
+    "hombre_region1", "hombre_region2", "hombre_region3",
+    "hombre_region4", "hombre_region5", "hombre_region6",
+    "aedu_region1", "aedu_region2", "aedu_region3",
+    "aedu_region4", "aedu_region5", "aedu_region6",
+    "miembros_region1", "miembros_region2", "miembros_region3",
+    "miembros_region4", "miembros_region5", "miembros_region6",
+    "miembros2_region1", "miembros2_region2", "miembros2_region3",
+    "miembros2_region4", "miembros2_region5", "miembros2_region6",
+    "edad", "edad2",
+    "edad_region1", "edad_region2", "edad_region3",
+    "edad_region4", "edad_region5", "edad_region6",
+    "edad2_region1", "edad2_region2", "edad2_region3",
+    "edad2_region4", "edad2_region5", "edad2_region6"
+  )
+
+# Weight variable
+weight_var <- "pondera"
+
+# Number of the bootstrap iterations
+n_iterations <- 5
+
+# Number of the nearest observations
+n_nearest <- 10
+
+
+### Running lassopmm
+raw_lassopmm <-
+  lassopmm(source = source_data,
+           target = target_data,
+           dep_var = dependent_var,
+           indep_var = independent_vars,
+           weight_var = weight_var,
+           n_near = n_nearest,
+           n_boot = n_iterations)
+
+
+# Converting predicted income to the regular values from logarithm
+raw_lassopmm <-
+  raw_lassopmm %>%
+  mutate(ipcf_source = exp(lipcf_source))
+
+# Initialising poverty lines
+pl_1 <- 5.5 * 30.41667
+pl_2 <- 13 * 30.41667
+
+# Calculating poverty status for different income groups
+poverty_calc <-
+  raw_lassopmm %>%
+  mutate(ipcf = if_else(.imp == 0, NA_real_, ipcf)) %>%
+  detect_poverty(ipcf, "target", pl_1, pl_2) %>%
+  detect_poverty(ipcf_source, "source", pl_1, pl_2) %>%
+  select(.id, .imp, pondera, contains("ipcf"),
+         contains("_target"), -contains("_actual"),
+         contains("_source")) %>%
+  left_join(
+    (.) %>%
+      select(matches("\\d.{1,}_source$"), matches("\\d.{1,}_target$")) %>%
+      get_all_combinations(mobility)
+  )
+
+# Selecting variables that contain poverty status
+compare_vars <-
+  poverty_calc %>%
+  names(.) %>%
+  magrittr::extract(stringr::str_detect(., "mobility_")) %>%
+  sort()
+
+# Calculating mobility statistics
+arg_act_mob <-
+  poverty_calc %>%
+  get_mi_means_table(compare_vars, "pondera") %>%
+  select(-ubar, -t) %>%
+  arrange(variable)
+
+# Saving mobility data into a file
+write.csv(arg_act_mob, "mobility_statistics.csv")s
 ```
