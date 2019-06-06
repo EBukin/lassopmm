@@ -381,7 +381,23 @@ shinyServer(function(input, output, session) {
   # Source poverty data diagnostics -----------------------
   source_pov_data <-
     reactive({
-      validate(need(isTruthy(input$source_data), "Source data is not specified."))
+      source_supported <-
+        stringr::str_to_lower(input$source_data$datapath) %>%
+        stringr::str_detect("\\.dta$") ||
+        stringr::str_to_lower(input$source_data$datapath) %>%
+        stringr::str_detect("\\.csv$")
+
+      validate(
+        need(isTruthy(input$source_data), "Source data is not specified."),
+        need(
+          if (isTruthy(input$source_data)) {
+            source_supported
+          } else {
+            TRUE
+          },
+          "Source data has unsupported format."
+        )
+        )
       req(input$weight_var)
       req(input$dep_var)
       wt_var <- input$weight_var
@@ -492,7 +508,24 @@ shinyServer(function(input, output, session) {
   # Target poverty data diagnostics -----------------------
   target_pov_data <-
     reactive({
-      validate(need(isTruthy(input$target_data), "Target data is not specified."))
+
+      target_supported <-
+        stringr::str_to_lower(input$target_data$datapath) %>%
+        stringr::str_detect("\\.dta$") ||
+        stringr::str_to_lower(input$target_data$datapath) %>%
+        stringr::str_detect("\\.csv$")
+
+      validate(
+        need(isTruthy(input$target_data), "Target data is not specified."),
+        need(
+          if (isTruthy(input$target_data)) {
+            target_supported
+          } else {
+            TRUE
+          },
+          "Target data has unsupported format."
+        ))
+
       req(input$weight_var)
       req(input$compare_var)
       wt_var <- input$weight_var
