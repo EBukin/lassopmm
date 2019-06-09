@@ -60,6 +60,7 @@ lassopmm <-
     # Checking weighting var
     if (is.na(weight_var) || is.null(weight_var)) {
       message("Default weights equal to all observations are used.")
+      w_mat <- matrix(rep(1, nrow(source)), nrow = nrow(source), ncol = 1)
     } else if (!weight_var %in% names(source)) {
       warning(paste0(
         "Weight variable '",

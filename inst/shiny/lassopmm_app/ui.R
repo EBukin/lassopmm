@@ -2,7 +2,7 @@
 suppressPackageStartupMessages({
   library(shiny)
   library(shinydashboard)
-  # library(listviewer)
+  library(shinyalert)
   library(stringr)
   library(dplyr)
   library(haven)
@@ -14,6 +14,7 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(janitor)
   library(mice)
+  library(statar)
 })
 
 options(shiny.maxRequestSize = 100 * 1024^2)
@@ -70,8 +71,17 @@ data_model_row <-
                 width = "100%"
               )
             ),
+            box(
+              status = "warning",
+              solidHeader = TRUE,
+              collapsible = FALSE,
+              width = NULL,
             textOutput("simulation_check"),
-            textOutput("simulation_check_2")
+            textOutput("simulation_check_2"),
+            textOutput("simulation_check_3"),
+            textOutput("simulation_check_4"),
+            textOutput("simulation_check_5")
+            )
           ),
 
           # Specification column
@@ -149,7 +159,7 @@ data_model_row <-
                   width = 12,
                   shiny::selectizeInput(
                     inputId = "add_var",
-                    label = "Additional variables",
+                    label = "Additional variables to be merged",
                     choices = NULL,
                     multiple = TRUE,
                     width = "100%"
@@ -244,7 +254,7 @@ analysis_results_row <-
                   "No tranformation" = "no",
                   "Take a logarithm" = "log"
                 ),
-                selected = "exp"
+                selected = "no"
               ),
 
               shiny::selectizeInput(
@@ -295,7 +305,7 @@ analysis_results_row <-
 
             # Results: First diagnostic box ---------------------
             box(
-              title = "Income variables comparison and ooverty summary",
+              title = "Income variables comparison and poverty summary",
               solidHeader = TRUE,
               status = "info",
               width = "100%",
@@ -313,6 +323,22 @@ analysis_results_row <-
                   h5("Povery statistics based on the 'target data' (period 1)"),
                   plotlyOutput(outputId = "target_income_plot"),
                   DT::DTOutput(outputId = "target_poverty_table")
+                )
+              )
+            ),
+
+            # Results: income ------------------------------------
+            box(
+              title = "Growth incidence",
+              solidHeader = TRUE,
+              status = "success",
+              width = "100%",
+              collapsible = TRUE,
+              collapsed = FALSE,
+              fluidRow(
+                column(
+                  width = 12,
+                  plotlyOutput(outputId = "growth_incidence")
                 )
               )
             ),
@@ -389,7 +415,15 @@ body <-
     #     jsoneditOutput("inputs_data")
     #   )
     # ),
-    analysis_results_row
+    analysis_results_row,
+    useShinyalert(),
+    tags$head(
+      tags$style(HTML("
+      .shiny-output-error-validation {
+        color: red;
+      }
+    "))
+    )
   )
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###

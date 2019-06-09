@@ -1,12 +1,12 @@
 Package: lassopmm
 Title: Create synthetic panels from cross sectional data
-Version: 0.0.1.0000
+Version: 0.0.1.0500
 Authors@R: c(
-    person(given = "Leonardo",
-           family = "Lucchetti",
-           role = c("aut")),
     person(given = "Paul",
            family = "Corral",
+           role = c("aut")),
+    person(given = "Leonardo",
+           family = "Lucchetti",
            role = c("aut")),
     person(given = "Eduard",
            family = "Bukin",
@@ -43,7 +43,8 @@ Imports:
     DT (>= 0.5),
     janitor (>= 1.2),
     mice (>= 3.3),
-    shinydashboard (>= 0.7.1)
+    shinydashboard (>= 0.7.1),
+    shinyalert
 Suggests: 
     knitr,
     rmarkdown

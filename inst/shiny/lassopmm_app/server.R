@@ -2,7 +2,24 @@ shinyServer(function(input, output, session) {
 
   # Loading source data -------------------
   source_data <- reactive({
-    req(input$source_data)
+    source_supported <-
+      stringr::str_to_lower(input$source_data$datapath) %>%
+        stringr::str_detect("\\.dta$") ||
+        stringr::str_to_lower(input$source_data$datapath) %>%
+          stringr::str_detect("\\.csv$")
+
+    validate(
+      need(isTruthy(input$source_data), "- Source data is not specified."),
+      need(
+        if (isTruthy(input$source_data)) {
+          source_supported
+        } else {
+          TRUE
+        },
+        "- Source data has unsupported format. Supported data formats are '.dta' and '.csv'."
+      )
+    )
+    # req(input$source_data)
     is_dta <-
       stringr::str_to_lower(input$source_data$datapath) %>%
       stringr::str_detect("\\.dta$")
@@ -25,7 +42,24 @@ shinyServer(function(input, output, session) {
 
   # Loading target data ---------------------
   target_data <- reactive({
-    req(input$target_data)
+    target_supported <-
+      stringr::str_to_lower(input$target_data$datapath) %>%
+        stringr::str_detect("\\.dta$") ||
+        stringr::str_to_lower(input$target_data$datapath) %>%
+          stringr::str_detect("\\.csv$")
+
+    validate(
+      need(isTruthy(input$target_data), "- Target data is not specified."),
+      need(
+        if (isTruthy(input$target_data)) {
+          target_supported
+        } else {
+          TRUE
+        },
+        "- Target data has unsupported format. Supported data formats are '.dta' and '.csv'."
+      )
+    )
+
     is_dta <-
       stringr::str_to_lower(input$target_data$datapath) %>%
       stringr::str_detect("\\.dta$")
@@ -64,7 +98,7 @@ shinyServer(function(input, output, session) {
     dep_var_guess <- variable_choices_source()[str_detect(variable_choices_source(), "lipcf")]
 
     if (length(dep_var_guess) == 0) {
-      dep_var_guess <- NULL
+      dep_var_guess <- ""
     }
 
     if (length(dep_var_guess) > 1) {
@@ -88,23 +122,44 @@ shinyServer(function(input, output, session) {
         function(x) !x %in% c(current_dep_var),
         variable_choices_source()
       )
+
     weight_var_guess <- possible_choices[str_detect(possible_choices, "pondera")]
 
     if (length(weight_var_guess) == 0) {
-      weight_var_guess <- NULL
+      weight_var_guess <- ""
     }
 
     if (length(weight_var_guess) > 1) {
       weight_var_guess <- weight_var_guess[[1]]
     }
 
-    updateSelectizeInput(
-      session,
-      inputId = "weight_var",
-      choices = possible_choices,
-      selected = weight_var_guess,
-      server = FALSE
-    )
+    isolate(current_weight <- input$weight_var)
+
+    if (is.null(current_weight) || current_weight == "") {
+      updateSelectizeInput(
+        session,
+        inputId = "weight_var",
+        choices = possible_choices,
+        selected = weight_var_guess,
+        server = FALSE
+      )
+    } else if (current_weight == current_dep_var) {
+      updateSelectizeInput(
+        session,
+        inputId = "weight_var",
+        choices = possible_choices,
+        selected = "",
+        server = FALSE
+      )
+    } else {
+      updateSelectizeInput(
+        session,
+        inputId = "weight_var",
+        choices = possible_choices,
+        selected = current_weight,
+        server = FALSE
+      )
+    }
   })
 
   # independent var
@@ -121,7 +176,7 @@ shinyServer(function(input, output, session) {
       session,
       inputId = "strata_var",
       choices = possible_choices,
-      selected = NULL,
+      selected = "",
       server = FALSE
     )
 
@@ -129,7 +184,7 @@ shinyServer(function(input, output, session) {
       session,
       inputId = "cluster_var",
       choices = possible_choices,
-      selected = NULL,
+      selected = "",
       server = FALSE
     )
   })
@@ -141,28 +196,44 @@ shinyServer(function(input, output, session) {
     current_strata_var <- input$strata_var
     current_cluster_var <- input$cluster_var
 
+    isolate(current_indep <- input$indep_var)
+
     possible_choices <-
       Filter(
         function(x) !x %in% c(
-          current_dep_var, current_weight_var,
-          current_strata_var, current_cluster_var
-        ),
+            current_dep_var, current_weight_var,
+            current_strata_var, current_cluster_var
+          ),
         variable_choices_source()
       )
 
-    suggested_choices <-
-      Filter(
-        function(x) !x %in% c("id", "ID", "ids", ".id", ".ids", ".ID"),
-        possible_choices
+    if (all(is.null(current_indep)) || current_indep[[1]] == "") {
+      suggested_choices <-
+        Filter(
+          function(x) !x %in% c("id", "ID", "ids", ".id", ".ids", ".ID"),
+          possible_choices
+        )
+      updateSelectizeInput(
+        session,
+        inputId = "indep_var",
+        choices = possible_choices,
+        selected = suggested_choices,
+        server = FALSE
       )
-
-    updateSelectizeInput(
-      session,
-      inputId = "indep_var",
-      choices = possible_choices,
-      selected = suggested_choices,
-      server = FALSE
-    )
+    } else {
+      suggested_choices <-
+        Filter(
+          function(x) !x %in% c("id", "ID", "ids", ".id", ".ids", ".ID"),
+          current_indep
+        )
+      updateSelectizeInput(
+        session,
+        inputId = "indep_var",
+        choices = possible_choices,
+        selected = suggested_choices,
+        server = FALSE
+      )
+    }
   })
 
   # Other variable
@@ -171,7 +242,7 @@ shinyServer(function(input, output, session) {
       session,
       inputId = "add_var",
       choices = variable_choices_source(),
-      selected = NULL,
+      selected = "",
       server = FALSE
     )
   })
@@ -182,7 +253,7 @@ shinyServer(function(input, output, session) {
     target_pove_var_guess <- variable_choices_target()[str_detect(variable_choices_target(), "ipcf")]
 
     if (length(target_pove_var_guess) == 0) {
-      target_pove_var_guess <- NULL
+      target_pove_var_guess <- ""
     }
 
     if (length(target_pove_var_guess) > 1) {
@@ -202,103 +273,213 @@ shinyServer(function(input, output, session) {
   # Simulation validators --------------------------
   output$simulation_check <-
     renderText({
-      target_supported <-
-        stringr::str_to_lower(input$target_data$datapath) %>%
-          stringr::str_detect("\\.dta$") ||
-          stringr::str_to_lower(input$target_data$datapath) %>%
-            stringr::str_detect("\\.csv$")
+      req(source_data())
+      validate(
+        need({
+          isTruthy(input$dep_var)
+        }, " - Please select dependent variable."),
+        need({
+          isTruthy(input$weight_var)
+        }, "- Don't forget to select weight variable if needed."),
+        need({
+          isTruthy(input$indep_var)
+        }, "- Please select independent variables.")
+      )
+    })
+
+  # Validate same variables
+  output$simulation_check_2 <-
+    renderText({
+      req(target_data())
+      req(source_data())
+
+      vars_selected <- c(input$indep_var)
+      vars_existing <- variable_choices_target()
+      missing_vars <- vars_selected[!vars_selected %in% vars_existing]
+      vars_message <-
+        str_c(
+          "- Variables '",
+          str_c(missing_vars, collapse = "', '"),
+          "' (from the list of independent variables) are missing in the 'target' data. \n",
+          "- Revise the list of independent variables or upload correct 'target' data."
+        )
+
+      validate(need({
+        all(vars_selected %in% vars_existing)
+      }, vars_message))
+    })
+
+  # Checking if there are non-numeric variables --------------------------
+  output$simulation_check_3 <-
+    renderText({
+      req(input$source_data)
+      req(input$dep_var)
+      req(input$indep_var)
+      variable_types <-
+        map(source_data(), ~ typeof(.x[1])) %>%
+        unlist() %>%
+        magrittr::extract(names(.) %in% c(input$dep_var, input$indep_var, input$weight_var)) %>%
+        magrittr::extract(!(.) %in% c("integer", "double"))
+      message <-
+        str_c(
+          "- Variable(s) '",
+          str_c(names(variable_types), collapse = "', "),
+          "' is (are) not integer or numeric. \n",
+          "- Only numeric and integer variables are alowed for dependent, independent and weight variables. ",
+          # "Analysis will result in error if unsupported variables' types are supplied. \n",
+          "- Unsupported variable(s) are: ",
+          str_c(str_c("[", names(variable_types), ": ", variable_types, "]"), collapse = ", ")
+        )
+      validate(
+        need({
+          length(variable_types) == 0
+        }, message)
+      )
+    })
+
+  # Missing data Validation -----------------------------------------
+  output$simulation_check_4 <-
+    renderText({
+      req(input$source_data)
+      req(input$dep_var)
+      req(input$indep_var)
+      n_na_rows <-
+        source_data() %>%
+        select(c(
+          var_check(input$dep_var), var_check(input$indep_var),
+          var_check(input$weight_var), var_check(input$strata_var),
+          var_check(input$cluster_var)
+        ))
+      if (ncol(n_na_rows) > 0) {
+        is_missing <- function(x) any(is.na(x))
+        cols_with_na <-
+          n_na_rows %>%
+          select_if(is_missing) %>%
+          names()
+        n_na_rows <-
+          n_na_rows %>%
+          filter_all(any_vars(is.na(.))) %>%
+          nrow()
+
+
+        validate(
+          need(
+            !n_na_rows > 0,
+            str_c(
+              "- 'Source data' contains ", n_na_rows, " rows, where one of the ",
+              "dependent, independent or weight variables contains empty value (NA). ",
+              "As such 'empty' values are not allowed in lassopmm analysis, ",
+              "they will be dropped. \n",
+              "- Variables that contain missing data are: '",
+              str_c(cols_with_na, collapse = "', '"),
+              "'. \n- Consider revising 'Source data' or independent, dependent and weight variables"
+            )
+          )
+        )
+      }
+    })
+
+  # Valid Press Simulation -------------------------------------
+  output$simulation_check_5 <-
+    renderText({
+      req(input$source_data)
+      req(input$target_data)
+      req(input$indep_var)
+      req(input$dep_var)
+      validate(need(
+        {
+          isTruthy(input$run_lassopmm)
+        },
+        "- Don't forget to press 'Run 'lassopmm' analysis'"
+      ))
+    })
+
+  # Lassopmm reactive ---------------------------------
+  observeEvent(input$run_lassopmm, {
+    problem <- FALSE
+    message <- ""
+    if (!isTruthy(input$source_data)) {
+      problem <- TRUE
+      message <- "'Source data' is missing!\n"
+    } else {
       source_supported <-
         stringr::str_to_lower(input$source_data$datapath) %>%
           stringr::str_detect("\\.dta$") ||
           stringr::str_to_lower(input$source_data$datapath) %>%
             stringr::str_detect("\\.csv$")
 
-      validate(
-        need(isTruthy(input$source_data), "Source data is not specified."),
+      if (!source_supported) {
+        problem <- TRUE
+        message <- str_c(message, "'Source data' has unsupported format. Supported data formats are '.dta' and '.csv'.\n")
+      } else {
+        if (!isTruthy(input$dep_var)) {
+          problem <- TRUE
+          message <- str_c(message, "Please select dependent variable.\n")
+        }
+        if (!isTruthy(input$indep_var)) {
+          problem <- TRUE
+          message <- str_c(message, "Please select independent variable.\n")
+        }
+      }
+    }
 
-        need(
-          if (isTruthy(input$source_data)) {
-            source_supported
-          } else {
-            TRUE
-          },
-          "Source data has unsupported format."
-        ),
-        need(isTruthy(input$target_data), "Target data is not specified."),
+    if (!isTruthy(input$target_data)) {
+      problem <- TRUE
+      message <- str_c(message, "'Target data' is missing!")
+    } else {
+      target_supported <-
+        stringr::str_to_lower(input$target_data$datapath) %>%
+          stringr::str_detect("\\.dta$") ||
+          stringr::str_to_lower(input$target_data$datapath) %>%
+            stringr::str_detect("\\.csv$")
+      if (!target_supported) {
+        problem <- TRUE
+        message <- str_c(message, "'Target data' has unsupported format. Supported data formats are '.dta' and '.csv'.\n")
+      }
+    }
 
-        need(
-          if (isTruthy(input$target_data)) {
-            target_supported
-          } else {
-            TRUE
-          },
-          "Target data has unsupported format."
-        ),
-        need(
-          {
-            if (!isTruthy(input$source_data)) {
-              TRUE
-            } else if (source_supported) {
-              isTruthy(input$dep_var)
-            } else {
-              TRUE
-            }
-          },
-          "Please select dependent variable."
-        ),
-        need(
-          {
-            if (!isTruthy(input$source_data)) {
-              TRUE
-            } else if (source_supported) {
-              isTruthy(input$weight_var)
-            } else {
-              TRUE
-            }
-          },
-          "Please select weight variable."
-        ),
-        need(
-          {
-            if (!isTruthy(input$source_data)) {
-              TRUE
-            } else if (source_supported) {
-              isTruthy(input$indep_var)
-            } else {
-              TRUE
-            }
-          },
-          "Please select independent variables."
+    if (isTruthy(input$source_data) &&
+      isTruthy(input$target_data) &&
+      target_supported &&
+      source_supported) {
+      vars_selected <- c(input$indep_var)
+      vars_existing <- variable_choices_target()
+      missing_vars <- vars_selected[!vars_selected %in% vars_existing]
+      vars_message <-
+        str_c(
+          "Variables '",
+          str_c(missing_vars, collapse = "', '"),
+          "' (from the list of independent variables) are missing in the 'target' data. ",
+          "Revise the list of independent variables or upload correct 'target' data."
         )
-      )
-    })
 
-  output$simulation_check_2 <-
-    renderText({
-      req(target_data())
-      validate(
-        need(
-          {
-            all(c(input$weight_var, input$indep_var) %in% variable_choices_target())
-          },
-          "Not all independent and weight variables from the source data are
-          present in the target data. Please provide a valid target data file."
-        ),
-        need(
-          {
-            isTruthy(simulation_results())
-          },
-          "Dont forget to press 'Run 'lassopmm' analysis'"
-        )
-      )
-    })
+      if (!all(vars_selected %in% vars_existing)) {
+        problem <- TRUE
+        message <- str_c(message, vars_message)
+      }
+    }
 
-  # Lassopmm reactive ---------------------------------
+    if (problem) {
+      shinyalert(
+        "Specification error!",
+        message,
+        type = "error",
+        closeOnClickOutside = TRUE,
+        timer = 5000
+      )
+    }
+  })
+
+  # Simulation ----------------------
   simulation_results <- reactiveVal()
-
   observeEvent({
     input$run_lassopmm
   }, {
+    req(source_data())
+    req(target_data())
+    req(input$dep_var)
+    req(input$indep_var)
+
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = "Running 'lassopmm'", value = 0)
@@ -311,96 +492,120 @@ shinyServer(function(input, output, session) {
       progress$set(value = value, detail = detail)
     }
 
-    lassopmm::lassopmm(
-      source = source_data(),
+    # Check if there are any NAs in data and filtering them out
+    filtered_source <-
+      source_data() %>%
+      filter_at(
+        vars(c(input$dep_var, var_check(input$indep_var), var_check(input$weight_var))),
+        all_vars(!is.na(.))
+      )
+
+    lasso_result <- try(lassopmm::lassopmm(
+      source = filtered_source,
       target = target_data(),
-      dep_var = input$dep_var,
-      indep_var = input$indep_var,
-      weight_var = input$weight_var,
-      extra_var = input$add_var,
-      strata_vars = input$strata_var,
-      cluster_vars = input$cluster_var,
+      dep_var = var_check(input$dep_var),
+      indep_var = var_check(input$indep_var),
+      weight_var = var_check(input$weight_var),
+      extra_var = var_check(input$add_var),
+      strata_vars = var_check(input$strata_var),
+      cluster_vars = var_check(input$cluster_var),
       n_near = input$n_near,
       n_boot = input$n_boot,
       force_lambda = input$force_lambda,
       n_folds = input$n_folds,
       updateProgress = updateProgress
-    ) %>%
-      simulation_results()
+    ),
+    silent = TRUE
+    )
+
+    got_error <-
+      ifelse(class(lasso_result)[[1]][[1]] == "try-error", TRUE, FALSE)
+
+    if (got_error) {
+      error_message <-
+        paste0(
+          "Unfortunately, 'lassopmm' yielded with an error. ",
+          "Try to modify list of independent variables. ",
+          "The error message is: ",
+          attr(lasso_result, "condition")[[1]]
+        )
+      error_message2 <-
+        paste0(
+          "Unfortunately, 'lassopmm' yielded with an error.\n ",
+          "Try to modify list of independent variables. \n",
+          "The error message is: \n",
+          attr(lasso_result, "condition")[[1]]
+        )
+      shinyalert(
+        "Lassopmm error!",
+        error_message2,
+        type = "error",
+        closeOnClickOutside = TRUE
+      )
+    } else {
+      error_message <- ""
+    }
+
+    validate(need(!got_error, error_message))
+
+    simulation_results(lasso_result)
   })
-#
-#
-#   # Technical input analysis ----------------
-#
-#   output$inputs_data <-
-#     renderJsonedit({
-#       jsonedit(
-#         list(
-#           `input$source_data` = input$source_data,
-#           source_data = source_data(),
-#           `input$target_data` = input$target_data,
-#           target_data = target_data()
-#           # dep_var = input$dep_var,
-#           # weight_var = input$weight_var,
-#           # indep_var = input$indep_var,
-#           # strata_var = input$strata_var,
-#           # cluster_var = input$cluster_var,
-#           # run_lassopmm = input$run_lassopmm
-#         ),
-#         mode =
-#           "tree", "change" = htmlwidgets::JS("function(){\n                                    console.log( event.currentTarget.parentNode.editor.get() )\n    }")
-#       )
-#     })
-#
-#   output$inputs_data2 <-
-#     renderPrint({
-#       print(
-#         list(
-#           # `input$source_data` = input$source_data,
-#           # source_data = source_data(),
-#           # `input$target_data` = input$target_data,
-#           # target_data = target_data(),
-#           dep_var = input$dep_var,
-#           weight_var = input$weight_var,
-#           indep_var = input$indep_var,
-#           strata_var = input$strata_var,
-#           cluster_var = input$cluster_var,
-#           run_lassopmm = input$run_lassopmm,
-#           n_boot = input$n_boot,
-#           n_near = input$n_near,
-#           n_folds = input$n_folds,
-#           force_lambda = input$force_lambda,
-#           pov_line_1 = input$pov_line_1,
-#           pov_line_2 = input$pov_line_2,
-#           exp_trans = input$exp_trans,
-#           run_poverty_calc = input$run_poverty_calc
-#         )
-#       )
-#     })
+  #
+  #
+  #   # Technical input analysis ----------------
+  #
+  #   output$inputs_data <-
+  #     renderJsonedit({
+  #       jsonedit(
+  #         list(
+  #           `input$source_data` = input$source_data,
+  #           source_data = source_data(),
+  #           `input$target_data` = input$target_data,
+  #           target_data = target_data()
+  #           # dep_var = input$dep_var,
+  #           # weight_var = input$weight_var,
+  #           # indep_var = input$indep_var,
+  #           # strata_var = input$strata_var,
+  #           # cluster_var = input$cluster_var,
+  #           # run_lassopmm = input$run_lassopmm
+  #         ),
+  #         mode =
+  #           "tree", "change" = htmlwidgets::JS("function(){\n                                    console.log( event.currentTarget.parentNode.editor.get() )\n    }")
+  #       )
+  #     })
+  #
+  #   output$inputs_data2 <-
+  #     renderPrint({
+  #       print(
+  #         list(
+  #           # `input$source_data` = input$source_data,
+  #           # source_data = source_data(),
+  #           # `input$target_data` = input$target_data,
+  #           # target_data = target_data(),
+  #           dep_var = input$dep_var,
+  #           weight_var = input$weight_var,
+  #           indep_var = input$indep_var,
+  #           strata_var = input$strata_var,
+  #           cluster_var = input$cluster_var,
+  #           run_lassopmm = input$run_lassopmm,
+  #           n_boot = input$n_boot,
+  #           n_near = input$n_near,
+  #           n_folds = input$n_folds,
+  #           force_lambda = input$force_lambda,
+  #           pov_line_1 = input$pov_line_1,
+  #           pov_line_2 = input$pov_line_2,
+  #           exp_trans = input$exp_trans,
+  #           run_poverty_calc = input$run_poverty_calc
+  #         )
+  #       )
+  #     })
 
   # Source poverty data diagnostics -----------------------
   source_pov_data <-
     reactive({
-      source_supported <-
-        stringr::str_to_lower(input$source_data$datapath) %>%
-        stringr::str_detect("\\.dta$") ||
-        stringr::str_to_lower(input$source_data$datapath) %>%
-        stringr::str_detect("\\.csv$")
-
-      validate(
-        need(isTruthy(input$source_data), "Source data is not specified."),
-        need(
-          if (isTruthy(input$source_data)) {
-            source_supported
-          } else {
-            TRUE
-          },
-          "Source data has unsupported format."
-        )
-        )
-      req(input$weight_var)
+      req(source_data())
       req(input$dep_var)
-      wt_var <- input$weight_var
+      wt_var <- var_check(input$weight_var)
       dp_var <- input$dep_var
       transf <- input$transform_dep_var
       source_data() %>%
@@ -418,6 +623,7 @@ shinyServer(function(input, output, session) {
     })
 
   output$source_income_plot <- renderPlotly({
+    req(source_pov_data())
     histogram <-
       source_pov_data() %>%
       ggplot() +
@@ -462,6 +668,9 @@ shinyServer(function(input, output, session) {
   output$source_poverty_table <- DT::renderDT({
     req(input$pov_line_1)
 
+    weight_var <- var_check(input$weight_var)
+    if (is.null(weight_var)) weight_var <- "1"
+
     pov_1 <- input$pov_line_1
     if (!isTruthy(input$pov_line_2)) {
       pov_2 <- NULL
@@ -473,7 +682,7 @@ shinyServer(function(input, output, session) {
       source_pov_data() %>%
       detect_poverty(eval(parse(text = input$dep_var)), "actual_pov", pov_1, pov_2) %>%
       mutate_at(vars(contains("actual_pov")), list(~ ifelse(. == 1, eval(
-        parse(text = input$weight_var)
+        parse(text = var_check(weight_var))
       ), 0))) %>%
       summarise_at(vars(contains("actual_pov")), list(~ sum(.))) %>%
       gather(var, val, 1:length(.)) %>%
@@ -508,44 +717,27 @@ shinyServer(function(input, output, session) {
   # Target poverty data diagnostics -----------------------
   target_pov_data <-
     reactive({
-
-      target_supported <-
-        stringr::str_to_lower(input$target_data$datapath) %>%
-        stringr::str_detect("\\.dta$") ||
-        stringr::str_to_lower(input$target_data$datapath) %>%
-        stringr::str_detect("\\.csv$")
-
-      validate(
-        need(isTruthy(input$target_data), "Target data is not specified."),
-        need(
-          if (isTruthy(input$target_data)) {
-            target_supported
-          } else {
-            TRUE
-          },
-          "Target data has unsupported format."
-        ))
-
-      req(input$weight_var)
+      req(target_data())
       req(input$compare_var)
-      wt_var <- input$weight_var
-      dp_var <- input$compare_var
+      wt_var <- var_check(input$weight_var)
+      compare_var <- input$compare_var
       transf <- input$transform_compare_var
       target_data() %>%
-        select(wt_var, dp_var) %>%
+        select(wt_var, compare_var) %>%
         {
           out <- (.)
           if (transf == "exp") {
-            out <- mutate_at(out, vars(dp_var), list(~ exp(.)))
+            out <- mutate_at(out, vars(compare_var), list(~ exp(.)))
           }
           if (transf == "log") {
-            out <- mutate_at(out, vars(dp_var), list(~ log(.)))
+            out <- mutate_at(out, vars(compare_var), list(~ log(.)))
           }
           out
         }
     })
 
   output$target_income_plot <- renderPlotly({
+    req(target_pov_data())
     histogram <-
       target_pov_data() %>%
       ggplot() +
@@ -586,13 +778,16 @@ shinyServer(function(input, output, session) {
   output$target_poverty_table <- DT::renderDT({
     req(input$pov_line_1)
 
+    weight_var <- var_check(input$weight_var)
+    if (is.null(weight_var)) weight_var <- "1"
+
     pov_1 <- input$pov_line_1
     if (!isTruthy(input$pov_line_2)) pov_2 <- NULL else pov_2 <- input$pov_line_2
 
     pov_stats <-
       target_pov_data() %>%
       detect_poverty(eval(parse(text = input$compare_var)), "actual_pov", pov_1, pov_2) %>%
-      mutate_at(vars(contains("actual_pov")), list(~ ifelse(. == 1, eval(parse(text = input$weight_var)), 0))) %>%
+      mutate_at(vars(contains("actual_pov")), list(~ ifelse(. == 1, eval(parse(text = weight_var)), 0))) %>%
       summarise_at(vars(contains("actual_pov")), list(~ sum(.))) %>%
       gather(var, val, 1:length(.)) %>%
       mutate(
@@ -624,8 +819,8 @@ shinyServer(function(input, output, session) {
     req(simulation_results())
     dependent_var <- input$dep_var
     imputed_var <- stringr::str_c(dependent_var, "_source")
-    compare_var <- input$compare_var
-    weight_var <- input$weight_var
+    compare_var <- var_check(input$compare_var)
+    weight_var <- var_check(input$weight_var)
     transf_dep <- input$transform_dep_var
     transf_comp <- input$transform_compare_var
 
@@ -668,7 +863,7 @@ shinyServer(function(input, output, session) {
     dependent_var <- input$dep_var
     imputed_var <- stringr::str_c(dependent_var, "_source")
     compare_var <- input$compare_var
-    weight_var <- input$weight_var
+    weight_var <- var_check(input$weight_var)
 
     simulation_results_clean() %>%
       select(.id, .imp, compare_var, imputed_var, weight_var) %>%
@@ -687,16 +882,18 @@ shinyServer(function(input, output, session) {
   observeEvent({
     input$run_mobility_calc
   }, {
-    validate(need({
-      isTruthy(input$pov_line_1)
-    }, "Please specify at least 'Extreme poverty line' to continue"))
+    validate(
+      need({
+        isTruthy(input$pov_line_1)
+      }, "Please specify at least 'Extreme poverty line' to continue")
+    )
 
     req(poverty_results())
 
     dependent_var <- input$dep_var
     imputed_var <- stringr::str_c(dependent_var, "_source")
-    compare_var <- input$compare_var
-    weight_var <- input$weight_var
+    compare_var <- var_check(input$compare_var)
+    weight_var <- var_check(input$weight_var)
 
     compare_vars <-
       poverty_results() %>%
@@ -706,7 +903,7 @@ shinyServer(function(input, output, session) {
 
     poverty_results() %>%
       mutate_at(vars(compare_vars), list(~ . * 100)) %>%
-      get_mi_means_table(compare_vars, "pondera") %>%
+      get_mi_means_table(compare_vars, weight_var) %>%
       select(-ubar, -t) %>%
       arrange(variable) %>%
       mobility_results()
@@ -749,15 +946,18 @@ shinyServer(function(input, output, session) {
       validate(
         need(
           isTruthy(simulation_results()),
-          "Don't forget to press 'Run 'lassopmm' analysis'"
+          "- Don't forget to press 'Run 'lassopmm' analysis'"
         ),
+        need({
+          isTruthy(input$pov_line_1)
+        }, "- Specify at least 'Extreme poverty line' to continue"),
         need(
           if (isTruthy(simulation_results())) {
             isTruthy(input$run_mobility_calc)
           } else {
             FALSE
           },
-          "Don't forget to press 'Run mobility calculations'"
+          "- Don't forget to press 'Run mobility calculations'"
         )
       )
 
@@ -781,9 +981,142 @@ shinyServer(function(input, output, session) {
             )
           )
         )
-
       )
     })
+
+  output$growth_incidence <- renderPlotly({
+    validate(need(
+      {
+        isTruthy(input$run_lassopmm)
+      },
+      "- Don't forget to press 'Run 'lassopmm' analysis'"
+    ))
+    req(simulation_results_clean())
+    req(input$compare_var)
+    n_tiles <- 5
+
+    dependent_var <- input$dep_var
+    imputed_var <- stringr::str_c(dependent_var, "_source")
+    compare_var <- var_check(input$compare_var)
+    weight_var <- var_check(input$weight_var)
+
+    subs_data <-
+      simulation_results_clean() %>%
+      select(.id, .imp, compare_var, imputed_var, weight_var) %>%
+      mutate(
+        target_compare = eval(parse(text = compare_var)),
+        source_imputed = eval(parse(text = imputed_var))
+      )
+
+    if (is.null(weight_var)) {
+      subs_data <-
+        subs_data %>%
+        mutate(weights = 1)
+    } else {
+      subs_data <-
+        subs_data %>%
+        mutate(weights = eval(parse(text = weight_var)))
+    }
+
+    subs_data <-
+      subs_data %>%
+      left_join(
+        (.) %>%
+          filter(.imp == 0) %>%
+          mutate(
+            quintiles =
+              statar::xtile(target_compare, n_tiles, wt = weights)
+          ) %>%
+          select(.id, quintiles),
+        ".id"
+      ) %>%
+      mutate(change_source_minus_target = source_imputed - target_compare) %>%
+      select(
+        .id, .imp, target_compare, weights,
+        source_imputed, quintiles, change_source_minus_target
+      )
+    mi_stat <-
+      suppressWarnings(
+        bind_rows(
+          get_mi_mean_by_group(subs_data, "target_compare", "quintiles", "weights"),
+          get_mi_mean_by_group(subs_data, "source_imputed", "quintiles", "weights"),
+          get_mi_mean_by_group(subs_data, "change_source_minus_target", "quintiles", "weights")
+        )
+      )
+
+    bar_data <-
+      mi_stat %>%
+      select(variable, quintiles, estimate) %>%
+      spread(variable, estimate) %>%
+      mutate_all(list(~ round(., 1)))
+
+    change_data <-
+      mi_stat %>%
+      select(variable, quintiles, estimate, `2.5 %`, `97.5 %`) %>%
+      filter(variable == "change_source_minus_target") %>%
+      mutate_if(is.numeric, list(~ round(., 1)))
+
+    target_file_name <- input$target_data$name
+    source_file_name <- input$source_data$name
+
+    change_plot <-
+      change_data %>%
+      ggplot() +
+      aes(x = quintiles, y = estimate, colour = estimate, fill = estimate) +
+      geom_point() +
+      geom_line() +
+      geom_errorbar(
+        aes(
+          ymin = `2.5 %`,
+          ymax = `97.5 %`
+        ),
+        width = .2
+      ) +
+      theme_minimal() +
+      theme(legend.position = "none") +
+      xlab(NULL) +
+      ylab(NULL)
+
+    change_plot <-
+      ggplotly(change_plot) %>%
+      layout(
+        yaxis = list(title = "Income change"),
+        xaxis = list(title = "Income 'tiles'")
+      )
+
+    bars <-
+      bar_data %>%
+      plot_ly() %>%
+      add_trace(
+        x = ~quintiles,
+        y = ~target_compare,
+        text = ~target_compare,
+        textposition = "auto",
+        type = "bar",
+        name = str_c("Actual income 'target'\n(", target_file_name, ")")
+      ) %>%
+      add_trace(
+        x = ~quintiles,
+        y = ~source_imputed,
+        text = ~source_imputed,
+        textposition = "auto",
+        type = "bar",
+        name = str_c("Imputed income 'source'\n (", source_file_name, ")")
+      ) %>%
+      layout(
+        yaxis = list(title = "Income levels"),
+        xaxis = list(title = "Income 'tiles'"),
+        barmode = "group"
+      )
+
+    suppressWarnings(
+      subplot(change_plot, bars, nrows = 2, shareX = TRUE, titleY = TRUE) %>%
+        layout(
+          showlegend = T,
+          barmode = "group"
+        )
+    )
+  })
 
   output$mobility_full_table <-
     DT::renderDataTable({
@@ -828,9 +1161,11 @@ shinyServer(function(input, output, session) {
       paste("data-", Sys.Date(), ".dta", sep = "")
     },
     content = function(con) {
-      haven::write_dta(data = simulation_results_clean() %>%
-                         janitor::clean_names(),
-                       path = con)
+      haven::write_dta(
+        data = simulation_results_clean() %>%
+          janitor::clean_names(),
+        path = con
+      )
     }
   )
 
