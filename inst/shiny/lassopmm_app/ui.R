@@ -40,7 +40,7 @@ data_model_row <-
     column(
       width = 12,
       box(
-        title = "Source data and model specification",
+        title = "Data and model specification",
         status = "primary",
         solidHeader = TRUE,
         collapsible = TRUE,
@@ -56,16 +56,32 @@ data_model_row <-
               collapsible = FALSE, # TRUE,
               # background = "light-blue",
               width = NULL,
+              numericInput(
+                "source_data_year",
+                label = str_c("Year of the source data "),
+                min = 0,
+                max = 2030,
+                value = 2011,
+                step = 1
+              ),
               fileInput(
                 "source_data",
-                label = "Source data file (period 0)",
+                label = HTML(str_c("Source data (where ", "&beta;", "'s are estimated)")),
                 multiple = FALSE,
                 accept = NULL,
                 width = "100%"
               ),
+              numericInput(
+                "target_data_year",
+                label = str_c("Year of the target data"),
+                min = 0,
+                max = 2030,
+                value = 2010,
+                step = 1
+              ),
               fileInput(
                 "target_data",
-                label = "Target data file (period 1)",
+                label = "Target data (where predicted values are imputed)",
                 multiple = FALSE,
                 accept = NULL,
                 width = "100%"
@@ -100,7 +116,7 @@ data_model_row <-
                   width = 6,
                   shiny::selectizeInput(
                     inputId = "dep_var",
-                    label = "Dependent variable",
+                    label = "Dependent variable (better to use the logarithm)",
                     choices = NULL,
                     multiple = FALSE,
                     selected = NULL
@@ -192,6 +208,13 @@ data_model_row <-
               collapsible = FALSE, # TRUE,
               # background = "light-blue",
               width = NULL,
+
+              shiny::numericInput(
+                inputId = "seed_n",
+                label = "'Seed' to make random calculations reproducible",
+                min = 0,
+                value = 12345
+              ),
 
               shiny::numericInput(
                 inputId = "n_boot",
@@ -314,13 +337,13 @@ analysis_results_row <-
               fluidRow(
                 column(
                   width = 6,
-                  h5("Povery statistics based on the 'source data' (period 0)"),
+                  h5("Povery statistics based on the 'source data'"),
                   plotlyOutput(outputId = "source_income_plot"),
                   DT::DTOutput(outputId = "source_poverty_table")
                 ),
                 column(
                   width = 6,
-                  h5("Povery statistics based on the 'target data' (period 1)"),
+                  h5("Povery statistics based on the 'target data'"),
                   plotlyOutput(outputId = "target_income_plot"),
                   DT::DTOutput(outputId = "target_poverty_table")
                 )

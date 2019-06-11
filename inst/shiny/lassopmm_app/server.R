@@ -500,6 +500,8 @@ shinyServer(function(input, output, session) {
         all_vars(!is.na(.))
       )
 
+    set.seed(input$seed_n)
+
     lasso_result <- try(lassopmm::lassopmm(
       source = filtered_source,
       target = target_data(),
@@ -645,8 +647,22 @@ shinyServer(function(input, output, session) {
         geom_vline(xintercept = input$pov_line_2, colour = "black")
     }
     histogram <-
-      histogram %>%
-      ggplotly()
+      try(
+        histogram %>%
+          ggplotly()
+      )
+
+    got_error <- ifelse(class(histogram)[[1]][[1]] == "try-error", TRUE, FALSE)
+
+    validate(
+      need(
+        !got_error,
+        str_c(
+          "Unfortunately, plot produced an error. \n",
+          "Try to change transformation type used for the varialbes in the source data."
+        )
+      )
+    )
 
     boxplot <-
       source_pov_data() %>%
@@ -738,6 +754,7 @@ shinyServer(function(input, output, session) {
 
   output$target_income_plot <- renderPlotly({
     req(target_pov_data())
+
     histogram <-
       target_pov_data() %>%
       ggplot() +
@@ -746,6 +763,7 @@ shinyServer(function(input, output, session) {
       xlab(input$compare_var) +
       ylab("") +
       theme_bw()
+
     if (isTruthy(input$pov_line_1)) {
       histogram <-
         histogram +
@@ -758,8 +776,24 @@ shinyServer(function(input, output, session) {
         geom_vline(xintercept = input$pov_line_2, colour = "black")
     }
     histogram <-
-      histogram %>%
-      ggplotly()
+      try(
+        histogram %>%
+          ggplotly(),
+        silent = TRUE
+      )
+
+    got_error <- ifelse(class(histogram)[[1]][[1]] == "try-error", TRUE, FALSE)
+
+    validate(
+      need(
+        !got_error,
+        str_c(
+          "Unfortunately, plot produced an error. \n",
+          "Try to change transformation type used for the varialbes in the traget data."
+        )
+      )
+    )
+
     boxplot <-
       target_pov_data() %>%
       plot_ly(x = ~ get(input$compare_var), type = "box", boxpoints = "outliers", jitter = 0.3) %>%
@@ -1017,6 +1051,11 @@ shinyServer(function(input, output, session) {
         subs_data %>%
         mutate(weights = eval(parse(text = weight_var)))
     }
+    year_1 <- input$source_data_year
+    year_2 <- input$target_data_year
+
+    year_dif <- abs(year_1 - year_2)
+    year_dif <- ifelse(year_dif == 0, 1, year_dif)
 
     subs_data <-
       subs_data %>%
@@ -1030,92 +1069,55 @@ shinyServer(function(input, output, session) {
           select(.id, quintiles),
         ".id"
       ) %>%
-      mutate(change_source_minus_target = source_imputed - target_compare) %>%
+      mutate(GIC = (source_imputed / target_compare)^(1/year_dif) - 1) %>%
       select(
         .id, .imp, target_compare, weights,
-        source_imputed, quintiles, change_source_minus_target
-      )
-    mi_stat <-
-      suppressWarnings(
-        bind_rows(
-          get_mi_mean_by_group(subs_data, "target_compare", "quintiles", "weights"),
-          get_mi_mean_by_group(subs_data, "source_imputed", "quintiles", "weights"),
-          get_mi_mean_by_group(subs_data, "change_source_minus_target", "quintiles", "weights")
-        )
+        source_imputed, quintiles, GIC
       )
 
-    bar_data <-
-      mi_stat %>%
-      select(variable, quintiles, estimate) %>%
-      spread(variable, estimate) %>%
-      mutate_all(list(~ round(., 1)))
+    mi_stat <- try(suppressWarnings(get_mi_mean_by_group(subs_data, "GIC", "quintiles", "weights")))
+    got_error <- ifelse(class(mi_stat)[[1]][[1]] == "try-error", TRUE, FALSE)
+
+    validate(
+      need(
+        !got_error,
+        str_c(
+          "Unfortunately, this plot produced an error. \n",
+          "Try to change transformation type used for the varialbes in the source or target data."
+        )
+      )
+    )
 
     change_data <-
       mi_stat %>%
       select(variable, quintiles, estimate, `2.5 %`, `97.5 %`) %>%
-      filter(variable == "change_source_minus_target") %>%
-      mutate_if(is.numeric, list(~ round(., 1)))
+      mutate(plus = `97.5 %` - estimate, minus = estimate - `2.5 %`,
+             quintiles = as.integer(quintiles)) %>%
+      mutate_at(vars(estimate, `2.5 %`, `97.5 %`, plus, minus), list(~round(., 3))) %>%
+      mutate(text =  str_c(estimate, " [95% CI: ", `2.5 %`, "; ", `97.5 %`,"]"))
 
-    target_file_name <- input$target_data$name
-    source_file_name <- input$source_data$name
-
-    change_plot <-
-      change_data %>%
-      ggplot() +
-      aes(x = quintiles, y = estimate, colour = estimate, fill = estimate) +
-      geom_point() +
-      geom_line() +
-      geom_errorbar(
-        aes(
-          ymin = `2.5 %`,
-          ymax = `97.5 %`
+    change_data%>%
+      plot_ly(
+        x = ~quintiles,
+        y = ~estimate,
+        type = 'scatter',
+        text = ~text,
+        name = 'Growth incidence curve',
+        mode = 'lines+markers',
+        hoverinfo = 'text',
+        error_y = ~list(
+          array = plus,
+          arrayminus = minus
+        )) %>%
+      layout(
+        title = "Growth incidence curve",
+        xaxis = list(
+          title = "Income 'tiles'"
         ),
-        width = .2
-      ) +
-      theme_minimal() +
-      theme(legend.position = "none") +
-      xlab(NULL) +
-      ylab(NULL)
-
-    change_plot <-
-      ggplotly(change_plot) %>%
-      layout(
-        yaxis = list(title = "Income change"),
-        xaxis = list(title = "Income 'tiles'")
-      )
-
-    bars <-
-      bar_data %>%
-      plot_ly() %>%
-      add_trace(
-        x = ~quintiles,
-        y = ~target_compare,
-        text = ~target_compare,
-        textposition = "auto",
-        type = "bar",
-        name = str_c("Actual income 'target'\n(", target_file_name, ")")
-      ) %>%
-      add_trace(
-        x = ~quintiles,
-        y = ~source_imputed,
-        text = ~source_imputed,
-        textposition = "auto",
-        type = "bar",
-        name = str_c("Imputed income 'source'\n (", source_file_name, ")")
-      ) %>%
-      layout(
-        yaxis = list(title = "Income levels"),
-        xaxis = list(title = "Income 'tiles'"),
-        barmode = "group"
-      )
-
-    suppressWarnings(
-      subplot(change_plot, bars, nrows = 2, shareX = TRUE, titleY = TRUE) %>%
-        layout(
-          showlegend = T,
-          barmode = "group"
+        yaxis = list(
+          title = "Compund annual growth rate"
         )
-    )
+      )
   })
 
   output$mobility_full_table <-
