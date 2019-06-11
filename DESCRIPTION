@@ -1,6 +1,6 @@
 Package: lassopmm
 Title: Create synthetic panels from cross sectional data
-Version: 0.0.1.0500
+Version: 0.0.1.1000
 Authors@R: c(
     person(given = "Paul",
            family = "Corral",
