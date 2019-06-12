@@ -63,7 +63,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">lassopmm</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2.0</span>
       </span>
     </div>
 
@@ -200,7 +200,7 @@ want to switch to the linear regression.</p></td>
 <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>glmnet</span>)</div><div class='output co'>#&gt; <span class='message'>Loading required package: Matrix</span></div><div class='output co'>#&gt; <span class='message'>Loading required package: foreach</span></div><div class='output co'>#&gt; <span class='message'></span>
 #&gt; <span class='message'>Attaching package: 'foreach'</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from 'package:purrr':</span>
 #&gt; <span class='message'></span>
-#&gt; <span class='message'>    accumulate, when</span></div><div class='output co'>#&gt; <span class='message'>Loaded glmnet 2.0-16</span></div><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>lassopmm</span>)
+#&gt; <span class='message'>    accumulate, when</span></div><div class='output co'>#&gt; <span class='message'>Loaded glmnet 2.0-18</span></div><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>library</a></span>(<span class='no'>lassopmm</span>)
 
 <span class='co'># Run estimate of a fake data</span>
 <span class='no'>XX</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/matrix'>as.matrix</a></span>(<span class='no'>mtcars</span>[, !<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/names'>names</a></span>(<span class='no'>mtcars</span>) <span class='kw'>%in%</span> <span class='st'>"hp"</span>])
@@ -387,12 +387,14 @@ want to switch to the linear regression.</p></td>
 #&gt; carb         18.5586363
 #&gt; </div><div class='input'>
 <span class='co'># Combine all coefficients in a table</span>
-<span class='no'>a_boot</span> <span class='kw'>%&gt;%</span>
+<span class='no'>aa</span> <span class='kw'>&lt;-</span>
+  <span class='no'>a_boot</span> <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='st'>"fit"</span>) <span class='kw'>%&gt;%</span>
   <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='kw pkg'>broom</span><span class='kw ns'>::</span><span class='no'><a href='https://www.rdocumentation.org/packages/broom/topics/reexports'>tidy</a></span>) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span>(<span class='no'>.x</span>, <span class='no'>term</span>, <span class='no'>estimate</span>)) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map2.html'>map2</a></span>(<span class='kw'>.y</span> <span class='kw'>=</span> <span class='fl'>1</span>:<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/length'>length</a></span>(<span class='no'>.</span>), ~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select_all.html'>rename_at</a></span>(<span class='no'>.x</span>, <span class='fu'><a href='https://dplyr.tidyverse.org/reference/vars.html'>vars</a></span>(<span class='no'>estimate</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/paste'>paste0</a></span>(<span class='no'>.</span>, <span class='st'>"_"</span>, <span class='no'>.y</span>)))) <span class='kw'>%&gt;%</span>
-  <span class='fu'><a href='https://purrr.tidyverse.org/reference/reduce.html'>reduce</a></span>(<span class='no'>full_join</span>)</div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span class='message'>Joining, by = "term"</span></div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 9 x 6</span><span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(~ <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select.html'>select</a></span>(<span class='no'>.x</span>, <span class='no'>term</span>, <span class='no'>estimate</span>))
+<span class='fu'><a href='https://purrr.tidyverse.org/reference/map.html'>map</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/seq'>seq_along</a></span>(<span class='no'>aa</span>), <span class='kw'>.f</span> <span class='kw'>=</span> <span class='kw'>function</span>(<span class='no'>x</span>) {
+  <span class='fu'><a href='https://dplyr.tidyverse.org/reference/select_all.html'>rename_at</a></span>(<span class='no'>aa</span><span class='kw'>[[</span><span class='no'>x</span>]], <span class='fu'><a href='https://dplyr.tidyverse.org/reference/vars.html'>vars</a></span>(<span class='no'>estimate</span>), <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>(~ <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/paste'>paste0</a></span>(<span class='no'>.</span>, <span class='st'>"_"</span>, <span class='no'>x</span>)))}) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='https://purrr.tidyverse.org/reference/reduce.html'>reduce</a></span>(<span class='no'>full_join</span>, <span class='kw'>by</span> <span class='kw'>=</span> <span class='st'>"term"</span>)</div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 9 x 6</span><span>
 #&gt;   term        estimate_1 estimate_2 estimate_3 estimate_4 estimate_5
 #&gt;   </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>            </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
 #&gt; </span><span style='color: #555555;'>1</span><span> (Intercept)    248.       146.       173.       324.       145.   
@@ -403,7 +405,8 @@ want to switch to the linear regression.</p></td>
 #&gt; </span><span style='color: #555555;'>6</span><span> cyl             </span><span style='color: #BB0000;'>NA</span><span>          2.23      </span><span style='color: #BB0000;'>NA</span><span>          2.02      15.9  
 #&gt; </span><span style='color: #555555;'>7</span><span> am              </span><span style='color: #BB0000;'>NA</span><span>         -</span><span style='color: #BB0000;'>2.18</span><span>      </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #BB0000;'>NA</span><span>         22.7  
 #&gt; </span><span style='color: #555555;'>8</span><span> mpg             </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #BB0000;'>NA</span><span>         -</span><span style='color: #BB0000;'>0.595</span><span>     -</span><span style='color: #BB0000;'>3.06</span><span>      -</span><span style='color: #BB0000;'>0.286</span><span>
-#&gt; </span><span style='color: #555555;'>9</span><span> vs              </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #BB0000;'>NA</span><span>         30.6  </div></span></pre>
+#&gt; </span><span style='color: #555555;'>9</span><span> vs              </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #BB0000;'>NA</span><span>         </span><span style='color: #BB0000;'>NA</span><span>         30.6  </div><div class='input'>
+</div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -420,7 +423,7 @@ want to switch to the linear regression.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Leonardo Lucchetti, Paul Corral, Eduard Bukin.</p>
+  <p>Developed by Paul Corral, Leonardo Lucchetti, Eduard Bukin.</p>
 </div>
 
 <div class="pkgdown">

@@ -87,12 +87,15 @@
 #'   map(coefficients)
 #'
 #' # Combine all coefficients in a table
-#' a_boot %>%
+#' aa <-
+#'   a_boot %>%
 #'   map("fit") %>%
 #'   map(broom::tidy) %>%
-#'   map(~ select(.x, term, estimate)) %>%
-#'   map2(.y = 1:length(.), ~ rename_at(.x, vars(estimate), list(~ paste0(., "_", .y)))) %>%
-#'   reduce(full_join)
+#'   map(~ select(.x, term, estimate))
+#' map(seq_along(aa), .f = function(x) {
+#'   rename_at(aa[[x]], vars(estimate), list(~ paste0(., "_", x)))}) %>%
+#'   reduce(full_join, by = "term")
+#'
 estimate_matches <-
   function(source_x_mat,
              source_y_mat,

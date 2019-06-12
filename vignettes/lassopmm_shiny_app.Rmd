@@ -1,6 +1,10 @@
 ---
 title: "Shiny app with lassopmm functionality"
-output: rmarkdown::html_vignette
+author: "Eduard Bukin"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+  keep_md: true
 vignette: >
   %\VignetteIndexEntry{lassopmm_shiny}}
   %\VignetteEngine{knitr::rmarkdown}

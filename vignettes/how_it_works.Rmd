@@ -1,6 +1,8 @@
 ---
 title: "How it works in steps"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+  keep_md: true
 vignette: >
   %\VignetteIndexEntry{how_it_works}
   %\VignetteEngine{knitr::rmarkdown}
@@ -161,12 +163,14 @@ a_boot %>%
 *    Combine all coefficients in a table:
 
 ```{r}
-a_boot %>%
- map("fit") %>%
- map(broom::tidy) %>%
- map(~ select(.x, term, estimate)) %>%
- map2(.y = 1:length(.), ~ rename_at(.x, vars(estimate), list(~ paste0(., "_", .y)))) %>%
- reduce(full_join, by = "term")
+aa <-
+  a_boot %>%
+  map("fit") %>%
+  map(broom::tidy) %>%
+  map(~ select(.x, term, estimate)) 
+map(seq_along(aa), .f = function(x) {
+  rename_at(aa[[x]], vars(estimate), list(~ paste0(., "_", x)))}) %>% 
+  reduce(full_join, by = "term")
 ```
 
 The source code of the function looks like:

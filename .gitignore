@@ -3,3 +3,6 @@
 .RData
 inst/doc
 submit/
+Meta
+doc
+rsconnect/

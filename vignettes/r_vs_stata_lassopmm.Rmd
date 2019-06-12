@@ -1,6 +1,10 @@
 ---
 title: "R versus STATA 'lassopmm'"
-output: rmarkdown::html_vignette
+author: "Eduard Bukin"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+  keep_md: true
 vignette: >
   %\VignetteIndexEntry{lassopmm_stata_r}}
   %\VignetteEngine{knitr::rmarkdown}
@@ -17,14 +21,6 @@ knitr::opts_chunk$set(
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, error=FALSE}
-format_kable <- function(.data) {
-  .data %>% 
-    knitr::kable(digits = 10) %>%
-    kable_styling(
-      bootstrap_options = c("striped", "condensed", "bordered")) %>%
-    scroll_box(width = "100%", height = "300px")
-}
-
 library(dplyr)
 library(kableExtra)
 library(lassopmm)
@@ -32,7 +28,13 @@ library(mice)
 library(statar)
 library(tidyr)
 library(purrr)
-
+format_kable <- function(.data) {
+  .data %>% 
+    knitr::kable(digits = 10) %>%
+    kable_styling(
+      bootstrap_options = c("striped", "condensed", "bordered")) %>%
+    scroll_box(width = "100%", height = "300px")
+}
 period0 <- 
   haven::read_dta("F:\\Drive\\WB\\leonardo\\learning\\eduard-stata/ARG/cross 13.dta") %>%
   haven::zap_labels() %>% 
@@ -130,7 +132,7 @@ n_nearest <- 10
 
 Running the analysis is made in one command:
 
-```{r cache=TRUE}
+```{r}
 set.seed(11738)
 r_mi_data_raw <- 
   lassopmm(period1, 
@@ -365,7 +367,7 @@ Using both adjustments does brings some bias to the results. Using option `use_r
 
 Below, we produce a table, where same statistics was calculated 10 times and estimation parameters were compared between two approaches. For the small sample, besides varying estimates we also find wide confidence intervals making out estimates insignificant
 
-```{r warning=FALSE, message=FALSE, echo=FALSE, cache=TRUE}
+```{r warning=FALSE, message=FALSE, echo=FALSE}
 rand <-
   map_df(1:10, 
          ~filter(suppressWarnings(
@@ -390,7 +392,7 @@ bind_cols(rand, fixed) %>%
 
 Same calculations for a group of slightly bigger size demonstrate significantly lower variability of estimates.
 
-```{r warning=FALSE, message=FALSE, echo=FALSE, cache=TRUE}
+```{r warning=FALSE, message=FALSE, echo=FALSE}
 rand <-
   map_df(1:10, 
          ~filter(suppressWarnings(
@@ -604,7 +606,7 @@ n_nearest <- 10
 
 Running the analysis is made in one command:
 
-```{r cache=TRUE}
+```{r}
 set.seed(238)
 chile_mi_data_raw <- 
   lassopmm(chile_period1, 
@@ -960,7 +962,7 @@ period1_year <- 2014
 
 Running the analysis is made in one command:
 
-```{r cache=TRUE}
+```{r}
 set.seed(2123138)
 peru_mi_data_raw <- 
   lassopmm(peru_period1, 
@@ -1329,7 +1331,7 @@ period1_year <- 2001
 
 Running the analysis is made in one command:
 
-```{r cache=TRUE}
+```{r }
 set.seed(3138)
 nicaragua_mi_data_raw <- 
   lassopmm(nicaragua_period1, 

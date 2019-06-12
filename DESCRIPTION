@@ -1,6 +1,6 @@
 Package: lassopmm
 Title: Create synthetic panels from cross sectional data
-Version: 0.0.1.1000
+Version: 0.0.2.0000
 Authors@R: c(
     person(given = "Paul",
            family = "Corral",
@@ -44,7 +44,8 @@ Imports:
     janitor (>= 1.2),
     mice (>= 3.3),
     shinydashboard (>= 0.7.1),
-    shinyalert
+    shinyalert,
+    kableExtra
 Suggests: 
     knitr,
     rmarkdown

@@ -1,6 +1,10 @@
 ---
 title: "Multiple imputation statistics in STATA and R"
-output: rmarkdown::html_vignette
+author: "Eduard Bukin"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+  keep_md: true
 vignette: >
   %\VignetteIndexEntry{mi_stata_r}}
   %\VignetteEngine{knitr::rmarkdown}
